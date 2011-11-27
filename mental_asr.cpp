@@ -11,9 +11,12 @@
 #include <fts.h>
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <map>
+
+#include "tcl.h"
 
 #include "mental_asr.h"
 #include "asr_core.h"
@@ -51,6 +54,7 @@ int init_asr_structs(Tcl_Interp *interp) {
 	nmt =  new NetlinkMessageTrig();
 	nmtt = new NetlinkMessageTime(0);
 	nls =  new NetlinkSender();
+	nlsr = new NetlinkMessageSamplerate(0);
 
 	init_loadproc_handlers(interp);
 
@@ -283,6 +287,13 @@ int inpdrv_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST ch
 			cout << inpm->get_driver_name() << endl;
 			return TCL_OK;
 		}
+		if ("samplerate" == cmd) {
+			unsigned int samplerate = inpm->get_samplerate();
+			ostringstream ostr;
+			ostr << samplerate;
+			Tcl_SetResult(interp,(char*)ostr.str().c_str(),TCL_VOLATILE);
+			return TCL_OK;
+		}
 	}
 	return TCL_ERROR;
 }
@@ -363,3 +374,4 @@ int load_processors(Tcl_Interp* interp, std::string foldername) {
 NetlinkMessageTrig* nmt = NULL;
 NetlinkMessageTime* nmtt = NULL;
 NetlinkSender* nls = NULL;
+NetlinkMessageSamplerate* nlsr = NULL;

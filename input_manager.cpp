@@ -113,7 +113,11 @@ int CInputManager::LoadInputDriver(Tcl_Interp* interp,std::string libname) {
 	}
 	dl_init = new dynamiclib_init;
 	dl_init->ck_size = sizeof(dynamiclib_init);
-	inpdrv_init(dl_init);
+	if (0 != inpdrv_init(dl_init)) {
+		cout << "CInputManager::LoadInputDriver error - функция инициализации внешней библиотеки вернула ошибку" << endl;
+		dlclose(libhandle);
+		return 2;
+	}
 
 	dl_init->tcl_init(interp);
 
@@ -126,6 +130,23 @@ std::string CInputManager::get_driver_name() {
 		return driver_name;
 	}
 	return "stdin";
+}
+
+unsigned int CInputManager::get_samplerate() {
+	if (library_loaded && dl_init->get_samplerate!=NULL)
+		return (unsigned int)dl_init->get_samplerate();
+
+	return 0;
+}
+
+bool CInputManager::set_samplerate(unsigned int samplerate) {
+	if (!library_loaded || NULL==dl_init->set_samplerate)
+		return false;
+
+	if (0 == dl_init->set_samplerate((int)samplerate))
+		return true;
+
+	return false;
 }
 
 CInputManager *inpm = NULL;

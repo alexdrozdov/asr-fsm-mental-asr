@@ -34,6 +34,9 @@ int wav_input_init(dynamiclib_init* dl_init) {
 	dl_init->read      = wavdrv_read_proc;
 	dl_init->close     = wavdrv_close_proc;
 
+	dl_init->get_samplerate = wavdrv_get_samplerate;
+	dl_init->set_samplerate = wavdrv_set_samplerate;
+
 	dl_init->asr_minor = 0;
 	dl_init->asr_major = 0x00010000;
 
@@ -176,5 +179,17 @@ int wavdrv_close_proc() {
 		wav_io->close();
 	}
 	return 0;
+}
+
+int wavdrv_get_samplerate() {
+	if (NULL == wav_io)
+		return 0;
+
+	return wav_io->get_defsamplerate();
+}
+
+int wavdrv_set_samplerate(int samplerate) {
+	//FIXME Реализовать преобразование частоты
+	return 1;
 }
 

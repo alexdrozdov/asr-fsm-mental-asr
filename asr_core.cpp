@@ -45,14 +45,17 @@ CBaseProcessor* CAsrCore::FindProcessor(std::string proc_name) {
 
 int CAsrCore::Process() {
 	vector<CBaseProcessor*>::iterator itp;
+	if (0 != inpm->open()) {
+		cout << "CAsrCore::Process error: failed to open input" << endl;
+	}
 
-	int bufsize = 44100 *100 / 1000;
+	int bufsize = inpm->get_samplerate() *100 / 1000;
 	int *buf = new int[bufsize];
 
 	//Инициализируем все процессоры
 	proc_math_init pmi;
 	pmi.ck_size = sizeof(proc_math_init);
-	pmi.samplerate = 44100;
+	pmi.samplerate = inpm->get_samplerate();
 	pmi.bufsize = bufsize;
 
 	cout << "CAsrCore::Process info: initializing processors" << endl;
@@ -62,9 +65,9 @@ int CAsrCore::Process() {
 	}
 
 	int rsize = 0; //Количество считанных байт из входного потока
-	if (0 != inpm->open()) {
-		cout << "CAsrCore::Process error: failed to open input" << endl;
-	}
+
+	nlsr->SetSamplerate(inpm->get_samplerate());
+	nls->Send(nlsr);
 
 	process_task pt;
 	pt.buf = buf;

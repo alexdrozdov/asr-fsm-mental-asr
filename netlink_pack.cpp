@@ -242,9 +242,47 @@ void NetlinkMessageTime::Dump(unsigned char* space) {
 void NetlinkMessageTime::Clear() {
 	current_time =0;
 }
+////////////////////////////////////////////////////////////////////
 
+NetlinkMessageSamplerate::NetlinkMessageSamplerate(unsigned int samplerate) {
+	this->samplerate = samplerate;
+}
+
+NetlinkMessageSamplerate::~NetlinkMessageSamplerate() {
+}
+
+void NetlinkMessageSamplerate::SetSamplerate(unsigned int samplerate) {
+	this->samplerate = samplerate;
+}
+
+int NetlinkMessageSamplerate::RequiredSize() {
+	int nsize = sizeof(netlink_hdr);
+	nsize += sizeof(unsigned int)*2;
+	return nsize;
+}
+
+void NetlinkMessageSamplerate::Dump(unsigned char* space) {
+	unsigned char* pnt = space;
+
+	netlink_hdr *pmsg_ptr = (netlink_hdr*)pnt;
+	pmsg_ptr->msg_type   = nlmt_link;
+	pmsg_ptr->msg_length = RequiredSize();
+	pnt += sizeof(netlink_hdr);
+
+	unsigned int* netlink_msg_subtype = (unsigned int*)pnt;
+	*netlink_msg_subtype = nllt_samplerate;
+	pnt += sizeof(unsigned int);
+
+	unsigned int* psamplerate = (unsigned int*)pnt;
+	*psamplerate = samplerate;
+}
+
+void NetlinkMessageSamplerate::Clear() {
+	samplerate = 0;
+}
 
 ////////////////////////////////////////////////////////////////////
+
 NetlinkSender::NetlinkSender() {
 	connected = false;
 

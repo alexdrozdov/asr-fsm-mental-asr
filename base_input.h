@@ -15,6 +15,8 @@ typedef int (*inpdrv_core_init_proc)(void);
 typedef int (*inpdrv_open_proc)(void);
 typedef int (*inpdrv_read_proc)(int*, int);
 typedef int (*inpdrv_close_proc)(void);
+typedef int (*inpdrv_get_samplerate)(void);
+typedef int (*inpdrv_set_samplerate)(int);
 
 typedef struct _dynamiclib_init {
 	unsigned int ck_size;
@@ -23,6 +25,9 @@ typedef struct _dynamiclib_init {
 	inpdrv_open_proc open;           //Функция, отвечющая за открытие канала ввода
 	inpdrv_read_proc read;           //Функция, обеспечивающая чтение
 	inpdrv_close_proc close;         //Функция, закрывающая канал
+
+	inpdrv_get_samplerate get_samplerate;
+	inpdrv_set_samplerate set_samplerate;
 
 	unsigned int asr_minor;          //Минимальная совместимая версия asr
 	unsigned int asr_major;          //Максимальная совместимая версия asr

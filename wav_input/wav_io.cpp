@@ -71,9 +71,7 @@ unsigned int CWavIo::read(unsigned char* buf, unsigned int count) {
 	if (!bopened) {
 		return 0;
 	}
-	//cout << "requested read count " << count << endl;
 	int r = fread(buf,1,count,wfile);
-	//cout << "read count " << r << endl;
 	return r;
 }
 

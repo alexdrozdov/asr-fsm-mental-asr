@@ -31,6 +31,14 @@ enum ENetlinkMsgType {
 	nlmt_trig_manage = 5 // Управление работой триггеров клиента
 };
 
+enum ENetlinkLinkType {
+	nllt_version  = 1,         //Определение текущей версии клиента и сервера. Не предполагает дополнительных данных
+	nllt_reset_buffers = 2,    //Сброс буферов. Не предполагает дополнительных данных
+	nllt_close_connection = 3, //Корректное завершение соединения. Не предполагает дополнительных данных.
+	nllt_sleep = 4,            //Усыпление клиента на заданное время. Позволяет снизить нагрузку на сервер. Дополнительные данные: длина 1, время в миллисекундах (int).
+	nllt_samplerate = 5        //Установить частоту дискретизации
+};
+
 
 
 typedef struct _time_msg {
@@ -127,6 +135,20 @@ private:
 	long long current_time;
 };
 
+class NetlinkMessageSamplerate : public NetlinkMessage {
+public:
+	NetlinkMessageSamplerate(unsigned int samplerate);
+	~NetlinkMessageSamplerate();
+
+	void SetSamplerate(unsigned int samplerate);
+
+	int RequiredSize();
+	void Dump(unsigned char* space);
+	void Clear();
+private:
+	unsigned int samplerate;
+};
+
 //Структура описывает буфер, готовый к отправке через Netlink
 typedef struct _send_message_struct {
 	unsigned char* data;
@@ -181,6 +203,7 @@ private:
 extern NetlinkMessageTrig* nmt;
 extern NetlinkMessageTime* nmtt;
 extern NetlinkSender*      nls;
+extern NetlinkMessageSamplerate* nlsr;
 
 
 

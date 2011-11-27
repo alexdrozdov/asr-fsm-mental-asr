@@ -23,6 +23,9 @@ extern int wavdrv_open_proc();
 extern int wavdrv_read_proc(int* buf,int n);
 extern int wavdrv_close_proc();
 
+extern int wavdrv_get_samplerate();
+extern int wavdrv_set_samplerate(int samplerate);
+
 #ifdef __cplusplus
 }
 #endif
