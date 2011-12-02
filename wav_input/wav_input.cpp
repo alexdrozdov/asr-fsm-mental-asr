@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <string>
-#include "tcl.h"
+#include <tcl8.5/tcl.h>
 #include "base_input.h"
 #include "wav_input.h"
 #include "wav_io.h"
@@ -19,7 +19,7 @@ string wav_name = "";
 
 int wav_input_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]);
 
-int wav_input_init(dynamiclib_init* dl_init) {
+int inpdrv_init(dynamiclib_init* dl_init) {
 	if (NULL == dl_init) {
 		return 1;
 	}

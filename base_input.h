@@ -8,7 +8,7 @@
 #ifndef BASE_INPUT_H_
 #define BASE_INPUT_H_
 
-#include "tcl.h"
+#include <tcl8.5/tcl.h>
 
 typedef int (*inpdrv_tcl_init_proc)(Tcl_Interp* interp);
 typedef int (*inpdrv_core_init_proc)(void);

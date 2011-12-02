@@ -1,8 +1,11 @@
 CCP=g++
 CCC=gcc
 CFLAGS=-Wall -c -g
-CF_TCL_H=-I ../tcl8.5.9/generic/ -I ../libxml2-2.7.8/include
-LDFLAGS=-L ../tcl8.5.9/unix/ -ltcl8.5 -L ../libxml2-2.7.8/.libs/  -lxml2 -lpthread -dl -L ./xml_support/obj/ -lxmlsup 
+
+LDFLAGS=-ltcl8.5 \
+        -lpthread \
+        -dl \
+        -L ./xml_support/obj/ -lxmlsup 
 
 SRCS=   main.cpp \
         netlink_pack.cpp \
@@ -10,11 +13,12 @@ SRCS=   main.cpp \
         mental_asr.cpp \
         asr_core.cpp \
         input_manager.cpp \
-        processor_loader.cpp
+        processor_loader.cpp \
+        common.cpp
 
 OBJS:=$(SRCS:%.cpp=./obj/%.o)
 
-PROG=mental_asr.bin
+PROG=_mental_asr.bin
 BUILD_DIR=./obj
 
 all:$(BUILD_DIR)/$(PROG)
@@ -41,6 +45,7 @@ xmlsup : FORCE
 
 dirs: FORCE
 	-@if [ ! -d $(BUILD_DIR) ]; then mkdir $(BUILD_DIR); fi
+	@cp -R ./bin ../
 
 FORCE:
 

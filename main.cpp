@@ -10,18 +10,17 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <string>
-#include "tcl.h"
+
+#include <tcl8.5/tcl.h>
 #include "mental_asr.h"
+#include "common.h"
 
 using namespace std;
 
-int Tcl_AppInit(Tcl_Interp *interp);
-string get_executable_path(char* argv0);
 string get_project_path(char* argv0);
 bool check_project_path ();
 
-string executable_path;
-string project_path;
+int Tcl_AppInit(Tcl_Interp *interp);
 
 int
 main(
@@ -35,9 +34,9 @@ main(
 	}
 
 	executable_path = get_executable_path(argv[0]);
-	cout << "Running from " << executable_path << endl;
-
 	project_path = get_project_path(argv[1]);
+
+	cout << "Running from " << executable_path << endl;
 	cout << "Project is " << project_path << endl;
 
 	if (!check_project_path()) {
@@ -45,18 +44,9 @@ main(
 		return 1;
 	}
 
-    Tcl_Main(1, argv, Tcl_AppInit);
+	Tcl_Main(1, argv, Tcl_AppInit);
 
     return 0;
-}
-
-string get_executable_path(char* argv0) {
-	string cwd = getcwd(NULL,0);
-	string argv_p = argv0 + 1;
-	string full_exe_path = cwd + argv_p;
-	size_t last_slash = full_exe_path.rfind('/');
-
-	return full_exe_path.substr(0,last_slash+1);
 }
 
 string get_project_path (char* argv1) {
@@ -134,48 +124,4 @@ Tcl_AppInit(
 }
 
 
-//#include <iostream>
-//#include <unistd.h>
-//
-//#include "mental_asr.h"
-//#include "netlink_pack.h"
-//
-//
-//using namespace std;
-//
-//
-//
-//int main(int argc,char *argv[]) {
-//	nmt = new NetlinkMessageTrig();
-//	//nmt->Add(1,0,0.1);
-//	//nmt->Add(1,1,0.2);
-//
-//	nmtt = new NetlinkMessageTime(0);
-//
-//
-//	nls = new NetlinkSender();
-//	nls->OpenConnection(0x7f000001,5000);
-//
-//	long long cur_time = 0;
-//	double trig_val = 0;
-//
-//	while (true) {
-//		nls->Send(nmt);
-//		nls->Send(nmtt);
-//
-//		nmt->Clear();
-//		nmt->Add(1,0,trig_val);
-//		trig_val += 0.05;
-//		if (trig_val>1) {
-//			trig_val = -1.0;
-//		}
-//
-//		cur_time++;
-//		nmtt->SetTime(cur_time);
-//
-//		usleep(2000);
-//	}
-//	return 0;
-//}
-//
 

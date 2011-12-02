@@ -150,7 +150,7 @@ void* spectrum_v1_create(std::string filename) {
 	return (void*) (new CSpectrumProcessor(filename));
 }
 
-int spectrum_v1_init(dynamicproc_init* dp_init) {
+int asr_proccessor_init(dynamicproc_init* dp_init) {
 	if (NULL == dp_init) {
 		return 1;
 	}

@@ -16,7 +16,9 @@
 #include <vector>
 #include <map>
 
-#include "tcl.h"
+#include <tcl8.5/tcl.h>
+
+#include "common.h"
 
 #include "mental_asr.h"
 #include "asr_core.h"
@@ -262,7 +264,7 @@ int inpdrv_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST ch
 		string opt = argv[2];
 
 		if ("load" == cmd) {
-			return inpm->LoadInputDriver(interp,opt);
+			return inpm->LoadInputDriver(interp, opt);
 		}
 		cout << "inpdrv_handler error: wrong options" << endl;
 		return TCL_ERROR;

@@ -8,14 +8,14 @@
 #ifndef WAV_INPUT_H_
 #define WAV_INPUT_H_
 
-#include "tcl.h"
+#include <tcl8.5/tcl.h>
 #include "base_input.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int wav_input_init(dynamiclib_init* dl_init);
+extern int inpdrv_init(dynamiclib_init* dl_init);
 
 extern int wavdrv_tcl_init_proc(Tcl_Interp* interp);
 extern int wavdrv_core_init_proc();

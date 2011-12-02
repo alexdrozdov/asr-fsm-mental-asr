@@ -17,7 +17,7 @@ all:$(BUILD_DIR)/$(PROG)
 $(BUILD_DIR)/$(PROG): dirs $(OBJS)
 	@echo [LD] $(PROG); \
 	$(CCP) $(OBJS) $(LDFLAGS) -o $(BUILD_DIR)/$(PROG)
-	@cp $(BUILD_DIR)/$(PROG) ../../bin/
+	@cp $(BUILD_DIR)/$(PROG) ../../bin/libs/
 
 $(BUILD_DIR)/%.o: %.cpp
 	@echo [CC] $< ; \

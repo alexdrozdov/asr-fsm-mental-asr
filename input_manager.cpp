@@ -7,9 +7,11 @@
 
 
 #include <dlfcn.h>
-#include "tcl.h"
+#include <tcl8.5/tcl.h>
 #include "input_manager.h"
 #include "mental_asr.h"
+
+#include "common.h"
 
 using namespace std;
 
@@ -77,10 +79,6 @@ int CInputManager::LoadInputDriver(Tcl_Interp* interp,std::string libname) {
 		libname = libname.substr(1);
 	}
 
-	if (0 != libname.compare(0,3,"lib")) {
-		cout << "CInputManager::LoadInputDriver error: library name " << libname << "couldn`t be used because prefix 'lib' is missing" << endl;
-		return 1;
-	}
 	if (0 != libname.compare(libname.size()-3,3,".so")) {
 		cout << "CInputManager::LoadInputDriver error: library name " << libname << "couldn`t be used because extension '.so' is missing" << endl;
 		return 1;
@@ -88,9 +86,9 @@ int CInputManager::LoadInputDriver(Tcl_Interp* interp,std::string libname) {
 
 	driver_name = libname.substr(3,libname.length()-6);
 
-	library_name = executable_path + libname;
+	library_name = build_file_path(libname);
 	cout << "Loading library " << library_name << endl;
-	init_func_name = driver_name + "_init";
+	init_func_name = "inpdrv_init";
 
 	dlerror();
 	libhandle = dlopen(library_name.c_str(),RTLD_LAZY);
@@ -100,12 +98,14 @@ int CInputManager::LoadInputDriver(Tcl_Interp* interp,std::string libname) {
 		if (NULL != msg) {
 			cout << "Error was: " << msg << endl;
 		}
+		return 1;
 	}
 
 	inputdrv_init_proc inpdrv_init = (inputdrv_init_proc)dlsym(libhandle,init_func_name.c_str());
 	if (NULL == inpdrv_init) {
 		cout << "CInputManager::LoadInputDriver error: couldn`t find symbol " << init_func_name << " in library" << endl;
 		dlclose(libhandle);
+		return 1;
 	}
 
 	if (NULL != dl_init) {

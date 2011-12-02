@@ -11,7 +11,7 @@
 #include <iostream>
 #include <string>
 
-#include "tcl.h"
+#include <tcl8.5/tcl.h>
 
 #include "base_input.h"
 

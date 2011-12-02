@@ -40,7 +40,7 @@ int load_processor_lib(std::string name, std::string libname) {
 
 	string library_name = executable_path + libname;
 	cout << "Loading library " << library_name << endl;
-	string init_func_name = driver_name + "_init";
+	string init_func_name = "asr_proccessor_init";
 
 	dlerror();
 	void* libhandle = dlopen(library_name.c_str(),RTLD_LAZY);

@@ -53,7 +53,7 @@ private:
 extern "C" {
 #endif
 
-extern int spectrum_v1_init(dynamicproc_init* dp_init);
+extern int asr_proccessor_init(dynamicproc_init* dp_init);
 
 extern int   spectrum_v1_init_tcl(Tcl_Interp* interp);
 extern int   spectrum_v1_init_core(proc_init_environ* env);

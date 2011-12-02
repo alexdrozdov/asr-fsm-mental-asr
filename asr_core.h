@@ -14,7 +14,7 @@
 
 #include <iostream>
 
-#include "tcl.h"
+#include <tcl8.5/tcl.h>
 
 #include "fwd_classes.h"
 #include "base_processor.h"
