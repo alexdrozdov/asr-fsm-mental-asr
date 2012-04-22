@@ -17,6 +17,8 @@ using namespace std;
 
 CInputManager::CInputManager() {
 	library_loaded = false;
+	opened = false;
+	libhandle = 0;
 
 	dl_init = NULL;
 }
@@ -65,7 +67,7 @@ int CInputManager::close() {
 	return r;
 }
 
-bool CInputManager::is_opened() {
+bool CInputManager::is_opened() const {
 	return opened;
 }
 
@@ -108,20 +110,23 @@ int CInputManager::LoadInputDriver(Tcl_Interp* interp,std::string libname) {
 		return 1;
 	}
 
-	if (NULL != dl_init) {
-		delete dl_init;
-	}
-	dl_init = new dynamiclib_init;
-	dl_init->ck_size = sizeof(dynamiclib_init);
-	if (0 != inpdrv_init(dl_init)) {
-		cout << "CInputManager::LoadInputDriver error - функция инициализации внешней библиотеки вернула ошибку" << endl;
-		dlclose(libhandle);
-		return 2;
-	}
+	delete dl_init;
 
-	dl_init->tcl_init(interp);
+	try {
+		dl_init = new dynamiclib_init;
+		dl_init->ck_size = sizeof(dynamiclib_init);
+		if (0 != inpdrv_init(dl_init)) {
+			cout << "CInputManager::LoadInputDriver error - функция инициализации внешней библиотеки вернула ошибку" << endl;
+			dlclose(libhandle);
+			return 2;
+		}
 
-	library_loaded = true;
+		dl_init->tcl_init(interp);
+
+		library_loaded = true;
+	} catch (...) {
+		return 1;
+	}
 	return 0;
 }
 

@@ -75,7 +75,7 @@ class NetlinkOut {
 public:
 	friend class NetlinkTrigger;
 	NetlinkOut(int id, double value);
-	void Dump(unsigned char* space);
+	void Dump(unsigned char* space) const;
 	int RequiredSize();
 private:
 	int out_id;
@@ -159,7 +159,7 @@ class NetlinkSender {
 public:
 	NetlinkSender();
 	int OpenConnection(int addr, int port);
-	bool Connected();
+	bool Connected() const;
 	int CloseConnection();
 
 	int Send(NetlinkMessage* msg);
@@ -175,6 +175,7 @@ private:
 	pthread_mutex_t to_send_mutex;
 	std::queue<send_message_struct> to_send;
 
+	int receive_thread_function();
 	int thread_function();
 	void initialize_send_queue();
 	void set_queue_size(int queue_size, bool signal_change);
@@ -185,6 +186,7 @@ private:
 
 
 	friend void* netlinksender_thread_function (void* thread_arg);
+	friend void* netlink_rcv_thread_function (void* thread_arg);
 
 	int sock;
 	bool connected;

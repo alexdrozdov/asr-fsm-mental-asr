@@ -49,16 +49,16 @@ class CWavIo {
 public:
 	CWavIo(std::string filename);
 	bool open();
-	bool is_opened();
+	bool is_opened() const;
 	bool close();
 	unsigned int getpos();
 	unsigned int seek(unsigned int pos);
-	unsigned int size();
+	unsigned int size() const;
 	unsigned int read(unsigned char* buf, unsigned int count);
 
 
-	int get_defsamplerate();
-	int get_bitspersample();
+	int get_defsamplerate() const;
+	int get_bitspersample() const;
 private:
 	std::string wav_filename;
 	bool bopened;

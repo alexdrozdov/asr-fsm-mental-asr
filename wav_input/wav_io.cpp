@@ -5,6 +5,7 @@
  *      Author: drozdov
  */
 
+#include <string.h>
 #include <iostream>
 #include "wav_io.h"
 
@@ -16,6 +17,7 @@ CWavIo::CWavIo (string filename) {
 	wav_filename = filename;
 	bopened = false;
 	wfile = NULL;
+	memset(&wheader, 0, sizeof(wav_file_header));
 }
 
 bool CWavIo::open() {
@@ -35,7 +37,7 @@ bool CWavIo::open() {
 	return 0;
 }
 
-bool CWavIo::is_opened() {
+bool CWavIo::is_opened() const {
 	return bopened;
 }
 
@@ -63,7 +65,7 @@ unsigned int CWavIo::seek(unsigned int pos) {
 	return 0;
 }
 
-unsigned int CWavIo::size() {
+unsigned int CWavIo::size() const {
 	return wheader.ch_data.chunksize;
 }
 
@@ -75,11 +77,11 @@ unsigned int CWavIo::read(unsigned char* buf, unsigned int count) {
 	return r;
 }
 
-int CWavIo::get_defsamplerate() {
+int CWavIo::get_defsamplerate() const {
 	return wheader.format.wf.nSamplesPerSec;
 }
 
-int CWavIo::get_bitspersample() {
+int CWavIo::get_bitspersample() const {
 	return wheader.format.wf.wBitsPerSample;
 }
 

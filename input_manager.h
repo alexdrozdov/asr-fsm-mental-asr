@@ -22,7 +22,7 @@ public:
 	int read(int* buf, int samples);
 	int close();
 
-	bool is_opened();
+	bool is_opened() const;
 	std::string get_driver_name();
 	unsigned int get_samplerate();
 	bool set_samplerate(unsigned int samplerate);

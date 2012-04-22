@@ -15,6 +15,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <pthread.h>
+
 #include <iostream>
 
 #include "netlink_pack.h"
@@ -25,6 +27,7 @@ using namespace std;
 
 
 void* netlinksender_thread_function (void* thread_arg);
+void* netlink_rcv_thread_function (void* thread_arg);
 
 
 NetlinkOut::NetlinkOut(int id, double value) {
@@ -32,7 +35,7 @@ NetlinkOut::NetlinkOut(int id, double value) {
 	out_value = value;
 }
 
-void NetlinkOut::Dump(unsigned char* space) {
+void NetlinkOut::Dump(unsigned char* space) const {
 	ptrig_msg_item itm = (ptrig_msg_item)space;
 	itm->out_id = out_id;
 	itm->value  = out_value;
@@ -199,9 +202,7 @@ void NetlinkMessageTrig::Clear() {
 	vector<NetlinkTrigger*>::iterator it;
 	for (it=triggers.begin();it<triggers.end();it++) {
 		NetlinkTrigger* cur = *it;
-		if (NULL != cur) {
-			delete cur;
-		}
+		delete cur;
 	}
 
 	triggers.resize(0);
@@ -328,7 +329,8 @@ int NetlinkSender::OpenConnection(int addr, int port) {
 
 	//Запускаем процесс взаимодействия с сервером
 	pthread_t thread_id;
-	pthread_create (&thread_id, NULL, &netlinksender_thread_function, this);
+	pthread_create(&thread_id, NULL, &netlinksender_thread_function, this);
+	pthread_create(&thread_id, NULL, &netlink_rcv_thread_function, this);
 
 	connected = true;
 
@@ -340,7 +342,7 @@ int NetlinkSender::CloseConnection() {
 	return 0;
 }
 
-bool NetlinkSender::Connected() {
+bool NetlinkSender::Connected() const {
 	return connected;
 }
 
@@ -403,6 +405,22 @@ int NetlinkSender::thread_function() {
 			cout << "pop " << send_queue_size << endl;
 		}
 	}
+	return 0;
+}
+
+int NetlinkSender::receive_thread_function() {
+	unsigned char buf[1024];
+
+	while(true) {
+		int bytes_read = read(sock, buf, 1024);
+		if(bytes_read <= 0) {
+			cout << "NetlinkSender::receive_thread_function - server disconnected with code "<< errno << endl;
+			break;
+		}
+		cout << "Some bytes received " << bytes_read << endl;
+		//process_buffer(buf,bytes_read);
+	}
+
 	return 0;
 }
 
@@ -586,9 +604,10 @@ void* netlinksender_thread_function (void* thread_arg) {
 }
 
 
+void* netlink_rcv_thread_function (void* thread_arg) {
+	NetlinkSender* nls = (NetlinkSender*) thread_arg;
+	nls->receive_thread_function();
 
-
-
-
-
+	return NULL;
+}
 
