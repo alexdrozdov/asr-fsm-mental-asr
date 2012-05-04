@@ -21,6 +21,11 @@
 #define FRAME_END    0xFE
 #define FRAME_ESCAPE 0xFC
 
+//Максимальный размер принимающего буфера
+#define MAX_RCV_BUF 10000
+//Количество принимающих буферов
+#define RCV_BUF_COUNT 10
+
 
 enum ENetlinkMsgType {
 	nlmt_link = 0,       // Управление потоком передачи данных
@@ -28,7 +33,8 @@ enum ENetlinkMsgType {
 	nlmt_time = 2,       // Информация о переключении времени
 	nlmt_trig = 3,       // Информация о переключении триггеров в текущем такте
 	nlmt_tcl = 4,        // tcl-команда. Предполагает ответ сервера
-	nlmt_trig_manage = 5 // Управление работой триггеров клиента
+	nlmt_trig_manage = 5,// Управление работой триггеров клиента
+	nlmt_text = 6        // Передача текстового отчета от сервера клиенту. Может интерпретироваться по соглашению клиента и сервера
 };
 
 enum ENetlinkLinkType {
@@ -175,7 +181,6 @@ private:
 	pthread_mutex_t to_send_mutex;
 	std::queue<send_message_struct> to_send;
 
-	int receive_thread_function();
 	int thread_function();
 	void initialize_send_queue();
 	void set_queue_size(int queue_size, bool signal_change);
@@ -183,7 +188,6 @@ private:
 	void decr_queue_size();
 
 	int pack_n_send(send_message_struct sms);
-
 
 	friend void* netlinksender_thread_function (void* thread_arg);
 	friend void* netlink_rcv_thread_function (void* thread_arg);
@@ -200,6 +204,18 @@ private:
 
 	unsigned int outcomming;
 	unsigned int incomming;
+
+	//Методы и члены, обеспечивающие обратный канал передачи данных от сервера
+	int receive_thread_function();
+	int process_buffer(unsigned char* buf, int len);
+	int process_message(unsigned char* buf, int len);
+	int buf_proc_state;
+
+	unsigned char *cur_buf; //Текущий буфер для декодируемого сообщения
+	unsigned char *pcur_buf;
+	int cur_buf_usage; //Количество использованных ячеек буфера
+
+	int process_string_message(unsigned char* buf, int len);
 };
 
 extern NetlinkMessageTrig* nmt;

@@ -25,6 +25,14 @@
 
 using namespace std;
 
+enum EBufProcessState {
+	bps_unknown = 0,
+	bps_start   = 1,
+	bps_body    = 2,
+	bps_escape  = 3,
+	bps_end     = 4
+};
+
 
 void* netlinksender_thread_function (void* thread_arg);
 void* netlink_rcv_thread_function (void* thread_arg);
@@ -302,6 +310,12 @@ NetlinkSender::NetlinkSender() {
 
 	outcomming = 0;
 	incomming  = 0;
+
+	//Инициализация полей для приема сообщений от сервера
+	buf_proc_state = 0;
+	cur_buf = (unsigned char*)malloc(MAX_RCV_BUF);
+	pcur_buf = cur_buf;
+	cur_buf_usage = 0;
 }
 
 int NetlinkSender::OpenConnection(int addr, int port) {
@@ -417,10 +431,184 @@ int NetlinkSender::receive_thread_function() {
 			cout << "NetlinkSender::receive_thread_function - server disconnected with code "<< errno << endl;
 			break;
 		}
-		cout << "Some bytes received " << bytes_read << endl;
-		//process_buffer(buf,bytes_read);
+		//cout << "Some bytes received " << bytes_read << endl;
+		process_buffer(buf,bytes_read);
 	}
 
+	return 0;
+}
+
+int NetlinkSender::process_buffer(unsigned char* buf, int len) {
+	unsigned char* pbuf = buf;
+
+	//if (dump_instream) {
+	//	cout << "NetlinkSender::process_buffer: " << len << endl;
+	//	cout << "Initial state is " << buf_proc_state << endl;
+
+	//	char ch[6];
+	//	for (int i=0;i<len;i++) {
+	//		sprintf(ch,"0x%X",buf[i]);
+	//		cout << ch << " ";
+	//	}
+	//	cout << endl;
+	//}
+
+	int i = 0;
+	while (i<len) {
+		switch (buf_proc_state) {
+			case bps_unknown:
+				//cout << "bps_unknown" << endl;
+				if (FRAME_START == *pbuf) {
+					//Из неизвестного состояния перешли в начало фрейма
+					buf_proc_state = bps_start;
+				} else {
+					pbuf++;
+					i++;
+				}
+				break;
+
+			case bps_start:
+				//cout << "bps_start" << endl;
+				//Безусловно переходим к обработке тела сообщения
+				buf_proc_state = bps_body;
+				pbuf++;
+				i++;
+
+				pcur_buf = cur_buf;
+				cur_buf_usage = 0;
+				break;
+
+			case bps_body:
+				//cout << "bps_body" << endl;
+				if (FRAME_ESCAPE == *pbuf) {
+					pbuf++;
+					i++;
+					buf_proc_state = bps_escape;
+					break;
+				} else if (FRAME_START == *pbuf) {
+					cout << "NetlinkSender::process_buffer atacked - frame start in message body" << endl;
+
+					cout << "Position " << i << endl;
+
+					cout << "Will now exit" << endl;
+					exit(4);
+				} else if (FRAME_END == *pbuf) {
+					//Прием буфера закончился. Обрабатываем принятый буфер
+					buf_proc_state = bps_unknown;
+
+					if (len < 8) {
+						//Фрейм имеет правильную струткуру, но содержит менее 8 байт
+						//В нем гарантированно отсутствует тип сообщения и длина
+						//Проверить правильность данных в этом буфере невозможно
+						cout << "NetlinkSender::process_buffer atacked - frame is too short to be valid" << endl;
+						exit(4);
+					}
+					process_message(cur_buf,cur_buf_usage);
+					pbuf++;
+					i++;
+					break;
+				}
+				//Обычный символ. Записываем его в буфер декодированного сообщения
+				*pcur_buf = *pbuf;
+				pcur_buf++;
+				cur_buf_usage++;
+				i++;
+				pbuf++;
+				if (MAX_RCV_BUF <= cur_buf_usage) {
+					cout << "NetlinkSender::process_buffer atacked - frame length overflow" << endl;
+					cout << "Will now exit" << endl;
+					exit(4);
+				}
+				break;
+			case bps_escape:
+				//cout << "bps_escape" << endl;
+				{
+					unsigned char c = 0;
+					if (0xCB == *pbuf) {
+						c = FRAME_START;
+					} else if (0xCE == *pbuf) {
+						c = FRAME_END;
+					} else if (FRAME_ESCAPE == *pbuf) {
+						c = FRAME_ESCAPE;
+					} else {
+						cout << "NetlinkSender::process_buffer - unknown escape symbol" << endl;
+						cout << "Will now exit" << endl;
+						exit(4);
+					}
+					*pcur_buf = c;
+					pcur_buf++;
+					cur_buf_usage++;
+					i++;
+					pbuf++;
+					buf_proc_state = bps_body;
+					if (MAX_RCV_BUF <= cur_buf_usage) {
+						cout << "NetlinkSender::process_buffer atacked - frame length overflow" << endl;
+						cout << "Will now exit" << endl;
+						exit(4);
+					}
+				}
+				break;
+		}
+	}
+	return 0;
+}
+
+int NetlinkSender::process_message(unsigned char* buf, int len) {
+	int msg_type = *(int*)buf;
+	int msg_len  = *(int*)(buf+4);
+
+	//Проверяем длину сообщения
+	if (msg_len != len-2) {
+		cout << "NetlinkSender::process_message atacked - wrong message length specified" << endl;
+		cout << "Will now exit" << endl;
+		exit(4);
+	}
+	//Длина сообщения, заданная в самом сообщении совпадает с полученной длиной фрейма
+
+	//Разбираем сообщение по его типу
+	switch (msg_type) {
+		//case nlmt_link:
+		//	return process_link_msg(buf, len);
+		//	break;
+		//case nlmt_security:
+		//	return process_sec_msg(buf, len);
+		//	break;
+		//case nlmt_time:
+		//	return process_time_msg(buf, len);
+		//	break;
+		//case nlmt_trig:
+		//	return process_trig_msg(buf, len);
+		//	break;
+		//case nlmt_tcl:
+		//	break;
+		case nlmt_text:
+			process_string_message(buf, len);
+			break;
+		default:
+			cout << "NetlinkSender::process_message atacked - unknown message type" << endl;
+			cout << "Will now exit" << endl;
+			exit(4);
+	}
+	return 0;
+}
+
+int NetlinkSender::process_string_message(unsigned char* buf, int len) {
+	int req_size = 4+4+sizeof(long long)*2 + 1; //type+len+time_start+duration+zero char
+	if (len < req_size) {
+		cout << "NetlinkSender::process_string_message - frame is too short to be valid" << endl;
+		exit(4);
+	}
+
+	long long *ptime = (long long*)(buf + 8);
+	long long *pduration = (long long*)(buf + 16);
+	buf[len-1] = 0; //На всякий случай завершаем буфер нулем
+	char* pmessage = (char*)buf + 24;
+	cout << "NetlinkSender::process_string_message info - message \"" << pmessage << "\" received at " << *ptime;
+	if (-1 != *pduration) {
+		cout << ". Valid for " << *pduration << endl;
+	} else {
+		cout << endl;
+	}
 	return 0;
 }
 
