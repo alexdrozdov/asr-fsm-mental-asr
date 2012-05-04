@@ -164,7 +164,7 @@ typedef struct _send_message_struct {
 class NetlinkSender {
 public:
 	NetlinkSender();
-	int OpenConnection(int addr, int port);
+	int OpenConnection(std::string addr, std::string port);
 	bool Connected() const;
 	int CloseConnection();
 

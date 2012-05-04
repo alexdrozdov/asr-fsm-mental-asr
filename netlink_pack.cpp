@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <pthread.h>
 
@@ -318,7 +319,7 @@ NetlinkSender::NetlinkSender() {
 	cur_buf_usage = 0;
 }
 
-int NetlinkSender::OpenConnection(int addr, int port) {
+int NetlinkSender::OpenConnection(std::string addr, std::string port) {
 	if (connected) {
 		cout << "NetlinkSender::OpenConnection warning - already connected" << endl;
 	}
@@ -330,8 +331,17 @@ int NetlinkSender::OpenConnection(int addr, int port) {
 	}
 
 	sock_addr.sin_family = AF_INET;
-	sock_addr.sin_port = htons(port); // или любой другой порт...
-	sock_addr.sin_addr.s_addr = htonl(addr);
+	sock_addr.sin_port = htons(atoi(port.c_str()));
+
+	if ("localhost" == addr) {
+		sock_addr.sin_addr.s_addr = htonl(0x7f000001);
+	} else {
+		if (0 == inet_aton(addr.c_str(), &(sock_addr.sin_addr))) {
+			cout << "netlink_handler error: wrong server address" << endl;
+			return 1;
+		}
+	}
+
 	if (connect(sock, (struct sockaddr *)&sock_addr, sizeof(sock_addr)) < 0) {
 		cout << "NetlinkSender::OpenConnection error - couldnt connect to remote host" << endl;
 		cout << strerror(errno) << endl;

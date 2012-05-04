@@ -155,14 +155,8 @@ int netlink_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST c
 		if ("open" == cmd) {
 			string server = argv[2];
 			string port   = argv[3];
-			int addr = 0;
-			int nport = atoi(port.c_str());
-			if ("localhost" == server) {
-				addr = 0x7f000001;
-			} else {
-				addr = atoi(server.c_str());
-			}
-			if (0 != nls->OpenConnection(addr,nport)) {
+
+			if (0 != nls->OpenConnection(server,port)) {
 				cout << "netlink_handler error: couldn`t establish connection to server" << endl;
 				return TCL_ERROR;
 			}
