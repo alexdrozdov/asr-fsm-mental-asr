@@ -14,7 +14,11 @@
 
 #include <iostream>
 
+#ifdef MACOSX
+#include <tcl.h>
+#else
 #include <tcl8.5/tcl.h>
+#endif
 
 #include "fwd_classes.h"
 #include "base_processor.h"

@@ -2,37 +2,54 @@ CCP=g++
 CCC=gcc
 CFLAGS=-Wall -c -g
 
+OS=$(shell uname -s)
+ifeq ($(OS),Darwin)
+	CFLAGS_AUX= `pkg-config --cflags libxml-2.0` \
+          -I ./xml_support/ \
+          -I ../../aux-packages/tcl8.5.9/generic/ \
+          -DMACOSX
+    install_targets=install.macos
+else
+    CFLAGS_AUX= `pkg-config --cflags libxml-2.0` \
+          -I ./xml_support/ \
+          -DGNULINUX
+    install_targets=install.gnulinux
+endif
+
 LDFLAGS=-ltcl8.5 \
         -lpthread \
         -dl \
-        -L ./xml_support/obj/ -lxmlsup 
+        -L ./xml_support/obj/ -lxmlsup  \
+        -rdynamic
 
-SRCS=   main.cpp \
-        netlink_pack.cpp \
-        crc.cpp \
-        mental_asr.cpp \
-        asr_core.cpp \
-        input_manager.cpp \
-        processor_loader.cpp \
-        common.cpp
+SRCS=$(wildcard *.cpp)
 
 OBJS:=$(SRCS:%.cpp=./obj/%.o)
 
 PROG=_mental_asr.bin
 BUILD_DIR=./obj
 
-all:$(BUILD_DIR)/$(PROG)
+all:$(BUILD_DIR)/$(PROG) wav_input spectrum_v1 $(install_targets)
 
-$(BUILD_DIR)/$(PROG): dirs $(OBJS) wav_input spectrum_v1 xmlsup
+$(BUILD_DIR)/$(PROG): dirs xmlsup $(OBJS)
 	@echo [LD] $(PROG); \
 	$(CCP) $(OBJS) $(LDFLAGS) -o $(BUILD_DIR)/$(PROG)
-	@cp $(BUILD_DIR)/$(PROG) ../bin/
-	@echo Done
-
 
 $(BUILD_DIR)/%.o: %.cpp
 	@echo [CC] $< ; \
-	$(CCP) $(CFLAGS) $(CF_TCL_H) -o $@ -c $< ;
+	$(CCP) $(CFLAGS) $(CFLAGS_AUX) -MD -o $@ -c $< ;
+
+include $(wildcard $(BUILD_DIR)/*.d) 
+
+install.gnulinux: FORCE
+	@cp $(BUILD_DIR)/$(PROG) ../bin/
+	@echo Done
+	
+install.macos: FORCE
+	@install_name_tool -change ./obj/libxmlsup.dylib  @executable_path/libs/libxmlsup.dylib $(BUILD_DIR)/$(PROG)
+	@cp $(BUILD_DIR)/$(PROG) ../bin/
+	@echo Done
+
 
 wav_input: FORCE
 	@$(MAKE) -C ./wav_input/

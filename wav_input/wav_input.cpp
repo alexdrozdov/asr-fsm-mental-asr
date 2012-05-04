@@ -7,7 +7,13 @@
 
 #include <iostream>
 #include <string>
+
+#ifdef MACOSX
+#include <tcl.h>
+#else
 #include <tcl8.5/tcl.h>
+#endif
+
 #include "base_input.h"
 #include "wav_input.h"
 #include "wav_io.h"

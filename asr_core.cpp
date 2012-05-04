@@ -12,11 +12,11 @@
 using namespace std;
 
 CAsrCore::CAsrCore () {
-	RegisterProcessor((CBaseProcessor*)1);
+	RegisterProcessor(NULL);
 }
 
 int CAsrCore::RegisterProcessor(CBaseProcessor* proc) {
-	if (1 == (int)proc) {
+	if (NULL == proc) {
 		//Тестовая опция
 		return 0;
 	}

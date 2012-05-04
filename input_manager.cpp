@@ -7,13 +7,31 @@
 
 
 #include <dlfcn.h>
+
+#ifdef MACOSX
+#include <tcl.h>
+#else
 #include <tcl8.5/tcl.h>
+#endif
+
 #include "input_manager.h"
 #include "mental_asr.h"
 
 #include "common.h"
 
 using namespace std;
+
+#ifdef MACOSX
+
+#define LIB_EXT ".dylib"
+#define LIB_EXT_LEN 6
+
+#else
+
+#define LIB_EXT ".so"
+#define LIB_EXT_LEN 3
+
+#endif
 
 CInputManager::CInputManager() {
 	library_loaded = false;
@@ -81,12 +99,12 @@ int CInputManager::LoadInputDriver(Tcl_Interp* interp,std::string libname) {
 		libname = libname.substr(1);
 	}
 
-	if (0 != libname.compare(libname.size()-3,3,".so")) {
-		cout << "CInputManager::LoadInputDriver error: library name " << libname << "couldn`t be used because extension '.so' is missing" << endl;
+	if (0 != libname.compare(libname.size()-LIB_EXT_LEN,LIB_EXT_LEN, LIB_EXT)) {
+		cout << "CInputManager::LoadInputDriver error: library name " << libname << "couldn`t be used because extension '" << LIB_EXT << "' is missing" << endl;
 		return 1;
 	}
 
-	driver_name = libname.substr(3,libname.length()-6);
+	driver_name = libname.substr(3,libname.length()-3-LIB_EXT_LEN);
 
 	library_name = build_file_path(libname);
 	cout << "Loading library " << library_name << endl;

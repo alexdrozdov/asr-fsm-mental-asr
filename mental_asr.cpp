@@ -16,7 +16,11 @@
 #include <vector>
 #include <map>
 
+#ifdef MACOSX
+#include <tcl.h>
+#else
 #include <tcl8.5/tcl.h>
+#endif
 
 #include "common.h"
 

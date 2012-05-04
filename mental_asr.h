@@ -11,7 +11,12 @@
 #include <string>
 #include <vector>
 
+#ifdef MACOSX
+#include <tcl.h>
+#else
 #include <tcl8.5/tcl.h>
+#endif
+
 #include "netlink_pack.h"
 
 extern NetlinkMessageTrig* nmt;

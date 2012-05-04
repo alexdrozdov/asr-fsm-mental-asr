@@ -8,7 +8,11 @@
 #ifndef BASE_INPUT_H_
 #define BASE_INPUT_H_
 
+#ifdef MACOSX
+#include <tcl.h>
+#else
 #include <tcl8.5/tcl.h>
+#endif
 
 typedef int (*inpdrv_tcl_init_proc)(Tcl_Interp* interp);
 typedef int (*inpdrv_core_init_proc)(void);

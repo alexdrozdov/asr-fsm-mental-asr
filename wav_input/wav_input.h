@@ -8,7 +8,12 @@
 #ifndef WAV_INPUT_H_
 #define WAV_INPUT_H_
 
+#ifdef MACOSX
+#include <tcl.h>
+#else
 #include <tcl8.5/tcl.h>
+#endif
+
 #include "base_input.h"
 
 #ifdef __cplusplus
