@@ -11,26 +11,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
+#include <stdint.h>
 
 typedef struct {
 /* File header */
   char riff[4];
-  long filesize;
+  int32_t filesize;
   char rifftype[4];
 } RiffHeader;
 
 typedef struct {
   char chunk_id[4];
-  long chunksize;
+  int32_t chunksize;
 } Chunk;
 
 typedef struct {
-  short wFormatTag;
-  short nChannels;
-  long nSamplesPerSec;
-  long nAvgBytesPerSec;
-  short nBlockAlign;
-  short wBitsPerSample;
+  int16_t wFormatTag;
+  int16_t nChannels;
+  int32_t nSamplesPerSec;
+  int32_t nAvgBytesPerSec;
+  int16_t nBlockAlign;
+  int16_t wBitsPerSample;
 } WAVEFORMAT;
 
 typedef struct {

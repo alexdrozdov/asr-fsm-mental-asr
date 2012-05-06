@@ -14,6 +14,7 @@
 #include <vector>
 #include <queue>
 #include <fstream>
+#include <stdint.h>
 
 #define MAX_QUEUE_SIZE 200
 
@@ -52,24 +53,24 @@ typedef struct _time_msg {
 } time_msg;
 
 typedef struct _trig_msg_item {
-	int out_id;
+	int32_t out_id;
 	double value;
 } trig_msg_item, *ptrig_msg_item;
 
 typedef struct _trig_msg_trg_item {
-	int trig_id;
-	int out_count;
+	int32_t trig_id;
+	int32_t out_count;
 } trig_msg_trg_item, *ptrig_msg_trg_item;
 
 typedef struct _netlink_msg {
-	int msg_type;
-	int msg_length;
-	int trig_count;
+	int32_t msg_type;
+	int32_t msg_length;
+	int32_t trig_count;
 } netlink_msg, *pnetlink_msg;
 
 typedef struct _netlink_header {
-	int msg_type;
-	int msg_length;
+	int32_t msg_type;
+	int32_t msg_length;
 } netlink_hdr;
 
 class NetlinkOut;

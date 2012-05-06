@@ -59,9 +59,12 @@ int CAsrCore::Process() {
 	pmi.bufsize = bufsize;
 
 	cout << "CAsrCore::Process info: initializing processors" << endl;
+	cout << "Processors count " << processors.size() << endl;
 	for (itp=processors.begin();itp < processors.end();itp++) {
 		CBaseProcessor* pr = *itp;
-		pr->Initialize(&pmi);
+		if (0 != pr->Initialize(&pmi)) {
+			return 1;
+		}
 	}
 
 	int rsize = 0; //Количество считанных байт из входного потока

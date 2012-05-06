@@ -267,7 +267,7 @@ void NetlinkMessageSamplerate::SetSamplerate(unsigned int samplerate) {
 
 int NetlinkMessageSamplerate::RequiredSize() {
 	int nsize = sizeof(netlink_hdr);
-	nsize += sizeof(unsigned int)*2;
+	nsize += sizeof(int32_t)*2;
 	return nsize;
 }
 
@@ -281,7 +281,7 @@ void NetlinkMessageSamplerate::Dump(unsigned char* space) {
 
 	unsigned int* netlink_msg_subtype = (unsigned int*)pnt;
 	*netlink_msg_subtype = nllt_samplerate;
-	pnt += sizeof(unsigned int);
+	pnt += sizeof(int32_t);
 
 	unsigned int* psamplerate = (unsigned int*)pnt;
 	*psamplerate = samplerate;

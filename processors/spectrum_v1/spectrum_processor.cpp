@@ -14,6 +14,9 @@
 
 using namespace std;
 
+//Максимально разрешенная частота входного сигнала
+#define MAX_SAMPLERATE 400000
+
 CAsrCore* asr;
 
 CSpectrumProcessor::CSpectrumProcessor(std::string filename) {
@@ -122,12 +125,26 @@ int CSpectrumProcessor::ProcessInput(pprocess_task pt) {
 }
 
 int CSpectrumProcessor::Initialize(pproc_math_init pmi) {
+	if (NULL == pmi) {
+		cout << "CSpectrumProcessor::Initialize error - null pointer to math init struct" << endl;
+		return 1;
+	}
 	samplerate = pmi->samplerate;
+
+	if (pmi->samplerate > MAX_SAMPLERATE) {
+		cout << "CSpectrumProcessor::Initialize error - samplerate (" << pmi->samplerate << ") supplied exides allowed (" << MAX_SAMPLERATE << ")" << endl;
+		return 1;
+	}
+	if (pmi->samplerate < 1) {
+		cout << "CSpectrumProcessor::Initialize error - samplerate (" << pmi->samplerate << ") is lesser than allowed" << endl;
+		return 1;
+	}
 
 	//Инициализируем таблицу DDS
 	v2N  = (int)ceil(log2(ceil((double)samplerate/0.5)));
 	v2Nl = (int)pow(2.0,(double)v2N);
 	v2Nlh = v2Nl / 2;
+
 	fdds.resize(v2Nl);
 	for (int i=0;i<v2Nl;i++) {
 		fdds[i] = cos(2*M_PI*(double)i / (double)v2Nl);
@@ -141,7 +158,6 @@ int CSpectrumProcessor::Initialize(pproc_math_init pmi) {
 		dds_states[i].pnt_mask = v2Nl-1;
 		dds_states[i].pnt_incr = (int)((double)frequencies[i] / freq_step);
 	}
-
 	return 0;
 }
 
