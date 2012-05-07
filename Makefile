@@ -1,5 +1,6 @@
 CCP=g++
 CCC=gcc
+PROTOC=protoc
 CFLAGS=-Wall -c -g
 
 OS=$(shell uname -s)
@@ -11,6 +12,7 @@ ifeq ($(OS),Darwin)
     install_targets=install.macos
 else
     CFLAGS_AUX= `pkg-config --cflags libxml-2.0` \
+          `pkg-config --cflags protobuf` \
           -I ./xml_support/ \
           -DGNULINUX
     install_targets=install.gnulinux
@@ -18,26 +20,38 @@ endif
 
 LDFLAGS=-ltcl8.5 \
         -lpthread \
-        -dl \
+        -ldl \
         -L ./xml_support/obj/ -lxmlsup  \
+        `pkg-config --libs protobuf` \
         -rdynamic
-
-SRCS=$(wildcard *.cpp)
-
-OBJS:=$(SRCS:%.cpp=./obj/%.o)
 
 PROG=_mental_asr.bin
 BUILD_DIR=./obj
 
+SRCS=$(wildcard *.cpp)
+OBJS:=$(SRCS:%.cpp=$(BUILD_DIR)/%.o)
+
+PROTO=$(wildcard *.proto)
+PROTO_CC=$(PROTO:%.proto=%.pb.cc)
+PROTO_OBJ=$(PROTO_CC:%.cc=$(BUILD_DIR)/%.o)
+
 all:$(BUILD_DIR)/$(PROG) wav_input spectrum_v1 $(install_targets)
 
-$(BUILD_DIR)/$(PROG): dirs xmlsup $(OBJS)
+$(BUILD_DIR)/$(PROG): dirs xmlsup $(PROTO_CC) $(PROTO_OBJ) $(OBJS)
 	@echo [LD] $(PROG); \
-	$(CCP) $(OBJS) $(LDFLAGS) -o $(BUILD_DIR)/$(PROG)
+	$(CCP) $(OBJS) $(PROTO_OBJ) $(LDFLAGS) -o $(BUILD_DIR)/$(PROG)
 
 $(BUILD_DIR)/%.o: %.cpp
 	@echo [CC] $< ; \
 	$(CCP) $(CFLAGS) $(CFLAGS_AUX) -MD -o $@ -c $< ;
+	
+$(BUILD_DIR)/%.o: %.cc
+	@echo [CC] $< ; \
+	$(CCP) $(CFLAGS) $(CFLAGS_AUX) -MD -o $@ -c $< ;
+	
+%.pb.cc: %.proto
+	@echo [PROTO] $< ; \
+	$(PROTOC) -I=./ --cpp_out=./ $< ;
 
 include $(wildcard $(BUILD_DIR)/*.d) 
 
@@ -67,7 +81,7 @@ dirs: FORCE
 FORCE:
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) *.pb.cc *.pb.h
 	@$(MAKE) clean -C ./wav_input/
 	@$(MAKE) clean -C ./xml_support/
 	@$(MAKE) clean -C ./processors/spectrum_v1

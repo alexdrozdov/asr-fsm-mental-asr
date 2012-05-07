@@ -131,164 +131,92 @@ NetlinkMessage::~NetlinkMessage() {
 }
 
 NetlinkMessageTrig::NetlinkMessageTrig() {
-	msg_type = nlmt_trig;
+	pkg.add_modified_triggers_inst();
 }
 
 NetlinkMessageTrig::~NetlinkMessageTrig() {
-	for (unsigned int i=0;i<triggers.size();i++) {
-		if (triggers[i] != NULL) {
-			delete triggers[i];
-		}
-	}
-}
-
-void NetlinkMessageTrig::Add(NetlinkTrigger* trigger) {
-	//Проверяем, что такого триггера не зарегистрировано
-	vector<NetlinkTrigger*>::iterator it;
-	for (it=triggers.begin();it<triggers.end();it++) {
-		NetlinkTrigger* cur = *it;
-		if (cur->trigger_id == trigger->trigger_id) {
-			//Такой уже есть
-			cout << "NetlinkMessageTrig::Add error - trigger with id=" << trigger->trigger_id << " is already registered" << endl;
-			return;
-		}
-	}
-
-	triggers.push_back(trigger);
 }
 
 void NetlinkMessageTrig::Add(int trigger_id, int out_id, double value) {
 	//Ищем триггер с указанным id
-	NetlinkTrigger* trigger = NULL;
-	vector<NetlinkTrigger*>::iterator it;
-	for (it=triggers.begin();it<triggers.end();it++) {
-		NetlinkTrigger* cur = *it;
-		if (cur->trigger_id == trigger_id) {
-			trigger = cur;
+	dsp::modified_triggers *mt = pkg.mutable_modified_triggers_inst(0);
+	dsp::modified_triger *mmt = NULL;
+	::google::protobuf::RepeatedPtrField< ::dsp::modified_triger >::iterator it;
+	for (it=mt->mutable_items()->begin();it!=mt->mutable_items()->end();it++){
+		if (it->id() == trigger_id) {
+			mmt = &(*it);
 			break;
 		}
 	}
-
-	if (NULL == trigger) {
-		//Триггер с таким id не найден. Создаем его
-		trigger = new NetlinkTrigger(trigger_id);
-		triggers.push_back(trigger);
+	if (NULL == mmt) {
+		mmt = mt->add_items();
 	}
-
-	trigger->Add(out_id,value);
+	mmt->set_id(trigger_id);
+	dsp::trigger_output* tro = mmt->add_outputs();
+	tro->set_out_id(out_id);
+	tro->set_value(value);
 }
 
 int NetlinkMessageTrig::RequiredSize() {
-	int nsize = sizeof(netlink_msg);
-
-	vector<NetlinkTrigger*>::iterator it;
-	for (it=triggers.begin();it<triggers.end();it++) {
-		NetlinkTrigger* cur = *it;
-		nsize += cur->RequiredSize();
-	}
-
-	return nsize;
+	return pkg.ByteSize();
 }
 
 void NetlinkMessageTrig::Dump(unsigned char* space) {
-	unsigned char* pnt = space;
-
-	pnetlink_msg pmsg_ptr = (pnetlink_msg)pnt;
-	pmsg_ptr->msg_type   = msg_type;
-	pmsg_ptr->msg_length = RequiredSize();
-	pmsg_ptr->trig_count = triggers.size();
-
-	pnt += sizeof(netlink_msg);
-	vector<NetlinkTrigger*>::iterator it;
-	for (it=triggers.begin();it<triggers.end();it++) {
-		NetlinkTrigger* cur = *it;
-		cur->Dump(pnt);
-		pnt += cur->RequiredSize();
-	}
+	pkg.SerializeToArray(space, pkg.ByteSize());
 }
 
 void NetlinkMessageTrig::Clear() {
-	vector<NetlinkTrigger*>::iterator it;
-	for (it=triggers.begin();it<triggers.end();it++) {
-		NetlinkTrigger* cur = *it;
-		delete cur;
-	}
-
-	triggers.resize(0);
+	pkg.mutable_modified_triggers_inst(0)->Clear();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 
 NetlinkMessageTime::NetlinkMessageTime(long long time) {
-	current_time = time;
+	pkg.add_time_inst()->set_current_time(time);
 }
 
 NetlinkMessageTime::~NetlinkMessageTime() {
 }
 
 void NetlinkMessageTime::SetTime(long long time) {
-	current_time = time;
+	pkg.mutable_time_inst(0)->set_current_time(time);
 }
 
 int NetlinkMessageTime::RequiredSize() {
-	int nsize = sizeof(netlink_hdr);
-	nsize += sizeof(long long);
-	return nsize;
+	return pkg.ByteSize();
 }
 
 void NetlinkMessageTime::Dump(unsigned char* space) {
-	unsigned char* pnt = space;
-
-	netlink_hdr *pmsg_ptr = (netlink_hdr*)pnt;
-	pmsg_ptr->msg_type   = nlmt_time;
-	pmsg_ptr->msg_length = RequiredSize();
-
-	pnt += sizeof(netlink_hdr);
-	long long *ptime = (long long*)pnt;
-	*ptime = current_time;
+	pkg.SerializeToArray(space, pkg.ByteSize());
 }
 
 void NetlinkMessageTime::Clear() {
-	current_time =0;
+	pkg.mutable_time_inst(0)->Clear();
 }
 ////////////////////////////////////////////////////////////////////
 
 NetlinkMessageSamplerate::NetlinkMessageSamplerate(unsigned int samplerate) {
-	this->samplerate = samplerate;
+	pkg.add_samplerate_inst()->set_samplerate(samplerate);
 }
 
 NetlinkMessageSamplerate::~NetlinkMessageSamplerate() {
 }
 
 void NetlinkMessageSamplerate::SetSamplerate(unsigned int samplerate) {
-	this->samplerate = samplerate;
+	pkg.mutable_samplerate_inst(0)->set_samplerate(samplerate);
 }
 
 int NetlinkMessageSamplerate::RequiredSize() {
-	int nsize = sizeof(netlink_hdr);
-	nsize += sizeof(int32_t)*2;
-	return nsize;
+	return pkg.ByteSize();
 }
 
 void NetlinkMessageSamplerate::Dump(unsigned char* space) {
-	unsigned char* pnt = space;
-
-	netlink_hdr *pmsg_ptr = (netlink_hdr*)pnt;
-	pmsg_ptr->msg_type   = nlmt_link;
-	pmsg_ptr->msg_length = RequiredSize();
-	pnt += sizeof(netlink_hdr);
-
-	unsigned int* netlink_msg_subtype = (unsigned int*)pnt;
-	*netlink_msg_subtype = nllt_samplerate;
-	pnt += sizeof(int32_t);
-
-	unsigned int* psamplerate = (unsigned int*)pnt;
-	*psamplerate = samplerate;
+	pkg.SerializeToArray(space, pkg.ByteSize());
 }
 
 void NetlinkMessageSamplerate::Clear() {
-	samplerate = 0;
+	pkg.mutable_samplerate_inst(0)->Clear();
 }
 
 ////////////////////////////////////////////////////////////////////

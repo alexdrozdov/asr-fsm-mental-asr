@@ -16,6 +16,8 @@
 #include <fstream>
 #include <stdint.h>
 
+#include "dsp_stream.pb.h"
+
 #define MAX_QUEUE_SIZE 200
 
 #define FRAME_START  0xFB
@@ -118,14 +120,12 @@ class NetlinkMessageTrig : public NetlinkMessage {
 public:
 	NetlinkMessageTrig();
 	~NetlinkMessageTrig();
-	void Add(NetlinkTrigger* trigger);
 	void Add(int triger_id, int out_id, double value);
 	int RequiredSize();
 	void Dump(unsigned char* space);
 	void Clear();
 private:
-	std::vector<NetlinkTrigger*> triggers;
-	int msg_type;
+	dsp::dsp_package pkg;
 };
 
 class NetlinkMessageTime : public NetlinkMessage {
@@ -139,7 +139,7 @@ public:
 	void Dump(unsigned char* space);
 	void Clear();
 private:
-	long long current_time;
+	dsp::dsp_package pkg;
 };
 
 class NetlinkMessageSamplerate : public NetlinkMessage {
@@ -153,7 +153,7 @@ public:
 	void Dump(unsigned char* space);
 	void Clear();
 private:
-	unsigned int samplerate;
+	dsp::dsp_package pkg;
 };
 
 //Структура описывает буфер, готовый к отправке через Netlink
