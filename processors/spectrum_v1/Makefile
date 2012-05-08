@@ -7,9 +7,12 @@ ifeq ($(OS),Darwin)
 	CF_AUX_FLAGS= `pkg-config --cflags libxml-2.0` \
           -I ../../xml_support/ \
           -I ../../../aux-packages/tcl8.5.9/generic/ \
+          -I ../../../../aux-packages/build/include/ \
           -DMACOSX
     LIB_EXT=dylib
     install_targets=install.macos
+    
+    PROTOC_PATH=$(shell pwd)/../../aux-packages/build/bin/
 else
     CF_AUX_FLAGS= `pkg-config --cflags libxml-2.0` \
           -I ../../xml_support/ \
@@ -17,6 +20,10 @@ else
     LIB_EXT=so
     install_targets=install.gnulinux
 endif
+
+CCP=g++
+CCC=gcc
+PROTOC=$(PROTOC_PATH)protoc
 
 CF_ASR_FLAGS=-I ../../ 
 

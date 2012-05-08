@@ -247,6 +247,10 @@ NetlinkSender::NetlinkSender() {
 	cur_buf_usage = 0;
 }
 
+NetlinkSender::~NetlinkSender() {
+	cout << "NetlinkSender::~NetlinkSender error - no appropriate method for net destruction implemented" << endl;
+}
+
 int NetlinkSender::OpenConnection(std::string addr, std::string port) {
 	if (connected) {
 		cout << "NetlinkSender::OpenConnection warning - already connected" << endl;

@@ -119,7 +119,7 @@ public:
 class NetlinkMessageTrig : public NetlinkMessage {
 public:
 	NetlinkMessageTrig();
-	~NetlinkMessageTrig();
+	virtual ~NetlinkMessageTrig();
 	void Add(int triger_id, int out_id, double value);
 	int RequiredSize();
 	void Dump(unsigned char* space);
@@ -131,7 +131,7 @@ private:
 class NetlinkMessageTime : public NetlinkMessage {
 public:
 	NetlinkMessageTime(long long time);
-	~NetlinkMessageTime();
+	virtual ~NetlinkMessageTime();
 
 	void SetTime(long long time);
 
@@ -145,7 +145,7 @@ private:
 class NetlinkMessageSamplerate : public NetlinkMessage {
 public:
 	NetlinkMessageSamplerate(unsigned int samplerate);
-	~NetlinkMessageSamplerate();
+	virtual ~NetlinkMessageSamplerate();
 
 	void SetSamplerate(unsigned int samplerate);
 
@@ -165,6 +165,7 @@ typedef struct _send_message_struct {
 class NetlinkSender {
 public:
 	NetlinkSender();
+	virtual ~NetlinkSender();
 	int OpenConnection(std::string addr, std::string port);
 	bool Connected() const;
 	int CloseConnection();

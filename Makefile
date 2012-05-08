@@ -1,6 +1,3 @@
-CCP=g++
-CCC=gcc
-PROTOC=protoc
 CFLAGS=-Wall -c -g
 
 OS=$(shell uname -s)
@@ -8,22 +5,36 @@ ifeq ($(OS),Darwin)
 	CFLAGS_AUX= `pkg-config --cflags libxml-2.0` \
           -I ./xml_support/ \
           -I ../../aux-packages/tcl8.5.9/generic/ \
+          -I ../../aux-packages/build/include/ \
           -DMACOSX
     install_targets=install.macos
+    PROTOC_PATH=$(shell pwd)/../../aux-packages/build/bin/
+    
+    LDFLAGS=-ltcl8.5 \
+        -lpthread \
+        -ldl \
+        -L ./xml_support/obj/ -lxmlsup  \
+        -L ../../aux-packages/build/lib/ -lprotobuf \
+        -rdynamic
 else
     CFLAGS_AUX= `pkg-config --cflags libxml-2.0` \
           `pkg-config --cflags protobuf` \
           -I ./xml_support/ \
           -DGNULINUX
     install_targets=install.gnulinux
-endif
-
-LDFLAGS=-ltcl8.5 \
+    
+    LDFLAGS=-ltcl8.5 \
         -lpthread \
         -ldl \
         -L ./xml_support/obj/ -lxmlsup  \
         `pkg-config --libs protobuf` \
         -rdynamic
+endif
+
+CCP=g++
+CCC=gcc
+PROTOC=$(PROTOC_PATH)protoc
+
 
 PROG=_mental_asr.bin
 BUILD_DIR=./obj
@@ -61,6 +72,7 @@ install.gnulinux: FORCE
 	
 install.macos: FORCE
 	@install_name_tool -change ./obj/libxmlsup.dylib  @executable_path/libs/libxmlsup.dylib $(BUILD_DIR)/$(PROG)
+	@install_name_tool -change /usr/local/lib/libprotobuf.7.dylib  @executable_path/libs/libprotobuf.7.dylib $(BUILD_DIR)/$(PROG)
 	@cp $(BUILD_DIR)/$(PROG) ../bin/
 	@echo Done
 
