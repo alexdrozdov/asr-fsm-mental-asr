@@ -6,18 +6,48 @@ OS=$(shell uname -s)
 ifeq ($(OS),Darwin)
 	CF_AUX_FLAGS= `pkg-config --cflags libxml-2.0` \
           -I ../../xml_support/ \
-          -I ../../../aux-packages/tcl8.5.9/generic/ \
+          -I ../../../../aux-packages/tcl8.5.9/generic/ \
           -I ../../../../aux-packages/build/include/ \
-          -DMACOSX
+          -DMACOSX -DAUXPACKAGES
     LIB_EXT=dylib
     install_targets=install.macos
     
     PROTOC_PATH=$(shell pwd)/../../aux-packages/build/bin/
+    
+    LDFLAGS= -shared \
+         -lpthread \
+         -ltcl8.5 \
+         `pkg-config --libs libxml-2.0` \
+         -lxmlsup -L ../../xml_support/obj/ \
+         -lm
+else
+ifeq ($(AUXBUILD),AUX)
+	CF_AUX_FLAGS= `pkg-config --cflags libxml-2.0` \
+          -I ../../xml_support/ \
+          -I ../../../../aux-packages/tcl8.5.9/generic/ \
+          -I ../../../../aux-packages/build/include/ \
+          -DGNULINUX
+          
+    LDFLAGS= -shared \
+         -lpthread \
+         -ltcl8.5 \
+         `pkg-config --libs libxml-2.0` \
+         -lxmlsup -L ../../xml_support/obj/ \
+         -lm
+    
 else
     CF_AUX_FLAGS= `pkg-config --cflags libxml-2.0` \
           -I ../../xml_support/ \
           -DGNULINUX
-    LIB_EXT=so
+          
+    LDFLAGS= -shared \
+         -lpthread \
+         -ltcl8.5 \
+         `pkg-config --libs libxml-2.0` \
+         -lxmlsup -L ../../xml_support/obj/ \
+         -lm
+endif
+	LIB_EXT=so
     install_targets=install.gnulinux
 endif
 
@@ -26,13 +56,6 @@ CCC=gcc
 PROTOC=$(PROTOC_PATH)protoc
 
 CF_ASR_FLAGS=-I ../../ 
-
-LDFLAGS= -shared \
-         -lpthread \
-         -ltcl8.5 \
-         `pkg-config --libs libxml-2.0` \
-         -lxmlsup -L ../../xml_support/obj/ \
-         -lm
 
 SRCS=$(wildcard *.cpp)
 OBJS:=$(SRCS:%.cpp=./obj/%.o)

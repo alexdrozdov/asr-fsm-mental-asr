@@ -8,7 +8,7 @@
 #ifndef WAV_INPUT_H_
 #define WAV_INPUT_H_
 
-#ifdef MACOSX
+#ifdef AUXPACKAGES
 #include <tcl.h>
 #else
 #include <tcl8.5/tcl.h>

@@ -6,8 +6,23 @@ ifeq ($(OS),Darwin)
           -I ./xml_support/ \
           -I ../../aux-packages/tcl8.5.9/generic/ \
           -I ../../aux-packages/build/include/ \
-          -DMACOSX
+          -DMACOSX -DAUXPACKAGES
     install_targets=install.macos
+    PROTOC_PATH=$(shell pwd)/../../aux-packages/build/bin/
+    
+    LDFLAGS=-ltcl8.5 \
+        -lpthread \
+        -ldl \
+        -L ./xml_support/obj/ -lxmlsup  \
+        -L ../../aux-packages/build/lib/ -lprotobuf \
+        -rdynamic
+else
+ifeq ($(AUXBUILD),AUX)
+	CFLAGS_AUX= `pkg-config --cflags libxml-2.0` \
+          -I ../../aux-packages/tcl8.5.9/generic/ \
+          -I ../../aux-packages/build/include/ \
+          -I ./xml_support/ \
+          -DGNULINUX -DAUXPACKAGES
     PROTOC_PATH=$(shell pwd)/../../aux-packages/build/bin/
     
     LDFLAGS=-ltcl8.5 \
@@ -21,7 +36,6 @@ else
           `pkg-config --cflags protobuf` \
           -I ./xml_support/ \
           -DGNULINUX
-    install_targets=install.gnulinux
     
     LDFLAGS=-ltcl8.5 \
         -lpthread \
@@ -30,11 +44,17 @@ else
         `pkg-config --libs protobuf` \
         -rdynamic
 endif
+	install_targets=install.gnulinux
+endif
 
 CCP=g++
 CCC=gcc
 PROTOC=$(PROTOC_PATH)protoc
 
+
+CCP=g++
+CCC=gcc
+PROTOC=$(PROTOC_PATH)protoc
 
 PROG=_mental_asr.bin
 BUILD_DIR=./obj
@@ -78,10 +98,10 @@ install.macos: FORCE
 
 
 wav_input: FORCE
-	@$(MAKE) -C ./wav_input/
+	@$(MAKE) -C ./wav_input/ AUXBUILD=$(AUXBUILD)
 
 spectrum_v1 : FORCE xmlsup
-	@$(MAKE) -C ./processors/spectrum_v1/
+	@$(MAKE) -C ./processors/spectrum_v1/ AUXBUILD=$(AUXBUILD)
 	
 xmlsup : FORCE
 	@$(MAKE) -C ./xml_support/
