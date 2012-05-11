@@ -1,0 +1,528 @@
+\documentclass[fleqn,10pt,a4paper]{article}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{wrapfig}
+
+\usepackage{geometry}
+\geometry{left=2cm}
+\geometry{right=1.5cm}
+\geometry{top=2cm}
+\geometry{bottom=2cm}
+
+\begin{document}
+В этом разделе приведены расчеты, необходимые для определения направления
+на одиночный источник звука. Направление на источник звука определяется на
+основании разности хода фазового фронта до микрофонов решетки. В простейшем
+случае решетка может содержать два микрофона.
+
+Чертеж приведен на рисунке
+рис.~\ref{single_s_src_dir}. Одиночный источник звука расположен в точке $D$ на расстоянии $L$ от центра плоскости микрофонной решетки. Микрофоны заркплены в точках $A$ и $B$, расстояние между микрофонами - $S$.
+
+\begin{figure}[p]
+\begin{tikzpicture}
+\draw (0,0) --(4,6) -- (5,0) -- (0,0);
+\draw (2.5,0) --(4,6) -- (4,0);
+\node [left] at (0,0) {A};
+\node [right] at (5,0) {B};
+\node [below] at (4,0) {C};
+\node [below] at (2.5,0) {K};
+\node [above] at (4,6) {D};
+\node [above left] at (3,2) {L};
+\draw (2.55,0.3) to [out=0,in=90] (2.8,0);
+\node [above right] at (2.7,0.1) {$\alpha$};
+\draw [fill=black] (4,0) rectangle (4.15,0.15);
+\node [above left]  at (2,3) {$l_1$};
+\node [above right] at (4.3,4) {$l_2$};
+\draw (0,0) circle (0.1);
+\draw (5,0) circle (0.1);
+\end{tikzpicture}\label{single_s_src_dir}
+\caption{Прием сигнала от одиночного источника}
+\end{figure}
+
+\begin{equation*}
+    \Delta{}l = l_1-l_2
+\end{equation*}
+\begin{equation*}
+    l_1 = \sqrt{AC^2+CD^2},~~~l_2 = \sqrt{BC^2+CD^2}
+\end{equation*}
+\begin{equation*}
+    CD = L\cdot\sin\alpha
+\end{equation*}
+\begin{equation*}
+    AC=\frac{S}{2}+KC=\frac{S}{2}+L\cos\alpha
+\end{equation*}
+\begin{equation*}
+    BC=\frac{S}{2}-KC=\frac{S}{2}-L\cos\alpha
+\end{equation*}
+
+\begin{equation*}
+\begin{split}
+	&\Delta{}l = l_1-l_2=\sqrt{AC^2+CD^2}-\sqrt{BC^2+CD^2}=\\
+	&\sqrt{\left(\frac{S}{2}+L\cos\alpha\right)^2+L^2\cdot\sin^2\alpha}-
+	\sqrt{\left(\frac{S}{2}-L\cos\alpha\right)^2+L^2\cdot\sin^2\alpha}=\\
+	&\sqrt{\left(\frac{S^2}{4}+S\cdot{}L\cdot\cos\alpha+L^2\cdot\cos^2\alpha+L^2\cdot\sin^2\alpha\right)}-
+	\sqrt{\left(\frac{S^2}{4}-S\cdot{}L\cdot\cos\alpha+L^2\cdot\cos^2\alpha+L^2\cdot\sin^2\alpha\right)}
+\end{split}
+\end{equation*}
+\begin{equation}
+	\boxed{
+		\Delta{}l =
+		\sqrt{\left(\frac{S^2}{4}+S\cdot{}L\cdot\cos\alpha+L^2\right)}-\sqrt{\left(\frac{S^2}{4}-S\cdot{}L\cdot\cos\alpha+L^2\right)}
+	}\label{delta_l_cos_alpha}
+\end{equation}
+
+Выполняем замену
+\begin{equation*}
+	a = \frac{S^2}{4}+L^2,~~~x = S\cdot{}L\cdot\cos\alpha
+\end{equation*}
+\begin{equation*}
+	\Delta{}l =	\sqrt{\left(a+x\right)}-\sqrt{\left(a-x\right)}
+\end{equation*}
+
+Решаем относительно $x$
+\begin{equation*}
+	{\Delta{}l}^2=a+x-2\sqrt{\left(a+x\right)}\cdot\sqrt{\left(a-x\right)}+a-x=2a-2\sqrt{\left(a+x\right)}\cdot\sqrt{\left(a-x\right)}=
+\end{equation*}
+\begin{equation*}
+	2a-2\sqrt{a^2-x^2}
+\end{equation*}
+\begin{equation*}
+	a^2-x^2=\left(a-\frac{{\Delta{}l}^2}{2}\right)^2
+\end{equation*}
+\begin{equation*}
+	x = \sqrt{a^2-\left(a-\frac{{\Delta{}l}^2}{2}\right)^2}
+\end{equation*}
+
+Подставляем $a$ и $x$
+\begin{equation*}
+	S\cdot{}L\cdot\cos\alpha =
+	\sqrt{\left(\frac{S^2}{4}+L^2\right)^2-\left(\frac{S^2}{4}+L^2-\frac{{\Delta{}l}^2}{2}\right)^2}
+\end{equation*}
+\begin{equation}
+	\boxed{
+		\cos\alpha =
+		\frac{\sqrt{\left(\frac{S^2}{4}+L^2\right)^2-\left(\frac{S^2}{4}+L^2-\frac{{\Delta{}l}^2}{2}\right)^2}}{S\cdot{}L}
+	}
+	\label{cos_alpha_SL}
+\end{equation}
+
+Формула~(\ref{cos_alpha_SL}) позволяет рассчитать направление на источник звука
+на основании разности хода фазового фронта $\Delta{}l$ и расстояния до источника
+$L$. В реальных условиях расстояние $L$ неизвестно, поэтому точное определение
+направления также невозможно. При расчетах по формуле~(\ref{cos_alpha_SL})
+рекомендуется принять допущение, что $L\ge50\cdot{}S$. При этом погрешность в
+определении направления зависит от величины $\Delta{}L=L-L_0$, где $L$ -
+расстояние до источника, используемое при рассчетах, $L_0$ - истинное расстояние
+до источника. Очевидно, что погрешность возрастает при увеличении значения
+$\Delta{}L$.
+
+На рисунке~\ref{single_s_src_err} приведен пояняющий чертеж. На чертеже
+$\alpha$ --- направление, определенное по формуле~(\ref{cos_alpha_SL}) на
+мнимый источник $D'$, $\alpha_0$ --- истинное направление на источник звука $D$.
+
+\begin{figure}[p]
+\begin{tikzpicture}
+%\draw[help lines] (0,0) grid (5,6);
+\draw (0,0) --(4,6) -- (5,0) -- (0,0);
+\draw (2.5,0) --(4,6);
+\draw (0,0) --(4,2) -- (5,0);
+\draw (2.5,0) --(4,2);
+\node [left] at (0,0) {A};
+\node [right] at (5,0) {B};
+\node [below] at (2.5,0) {K};
+\node [above] at (4,6) {$D'$};
+\node [above] at (4,2) {D};
+\node [above left] at (3,2) {L};
+\node [above right] at (3.3,0.8) {$L_0$};
+\draw (2.55,0.3) to [out=0,in=90] (2.8,0);
+\node [above right] at (2.8,0) {$\alpha$};
+\draw (3.1,0.8) to [out=0,in=90] (3.7,0);
+\node [above right] at (3.6,0.1) {$\alpha_0$};
+\draw (0,0) circle (0.1);
+\draw (5,0) circle (0.1);
+\end{tikzpicture}\label{single_s_src_err}
+\caption{Погрешность в определении направления при неизвестном $L_0$}
+\end{figure}
+
+Введем неравенство, связывающее между собой углы $\alpha$ и $\alpha_0$
+максимальной погрешностью определения направления $\Delta\alpha$
+\begin{equation*}
+	|\alpha-\alpha_0| < \Delta\alpha
+\end{equation*}
+\begin{equation*}
+	\left\{
+		\begin{aligned}
+			\alpha &< \alpha_0 + \Delta\alpha~,~\alpha>\alpha_0\\
+			\alpha &> \alpha_0 - \Delta\alpha~,~\alpha<\alpha_0\\
+		\end{aligned}
+	\right.
+\end{equation*}
+
+Чертежу соответствует первое неравенство системы.
+\begin{equation*}
+			\alpha < \alpha_0 + \Delta\alpha
+\end{equation*}
+\begin{equation*}
+			\alpha_0 > \alpha - \Delta\alpha
+\end{equation*}
+
+Необходимо наложить такое ограничение на $L_0$, чтобы выполнялись условия этого
+неравенства.
+\begin{equation*}
+	\cos\alpha_0 < \cos\left(\alpha - \Delta\alpha\right)
+\end{equation*}
+
+Изменение знака неравенства обусловленно свойствами $\cos\alpha$.
+Значение $\alpha$ получается на основе $\cos\alpha$ и должно рассчитываться по
+формуле~(\ref{cos_alpha_SL}). Для удобства будет выполнена замена 
+$\Delta{}l=\Delta{}l_0$. Расчет $\Delta{}l_0$ должен производиться для 
+реального направления $\alpha_0$ и реального расстояния $L_0$ по 
+формуле~\ref{delta_l_cos_alpha}. Для расчета $\cos\alpha_0$ также должна
+применяться формула~(\ref{cos_alpha_SL}).
+
+\begin{equation*}
+	\frac{\sqrt{\left(\frac{S^2}{4}+{L_0}^2\right)^2-\left(\frac{S^2}{4}+{L_0}^2-\frac{{\Delta{}l_0}^2}{2}\right)^2}}{S\cdot{}L_0}
+	< \cos\left(\alpha - \Delta\alpha\right)
+\end{equation*}
+\begin{equation*}
+	\sqrt{\left(\frac{S^2}{4}+{L_0}^2\right)^2-\left(\frac{S^2}{4}+{L_0}^2-\frac{{\Delta{}l_0}^2}{2}\right)^2}
+	< S\cdot{}L_0\cdot\cos\left(\alpha - \Delta\alpha\right)
+\end{equation*}
+
+Упрощаем подкоренное выражение
+
+\begin{equation*}
+\begin{split}
+	&\left(\frac{S^2}{4}+{L_0}^2\right)^2-\left(\frac{S^2}{4}+{L_0}^2-\frac{{\Delta{}l_0}^2}{2}\right)^2=\\
+	&\frac{{\Delta{}l_0}^2}{2}\cdot\left(2\frac{S^2}{4}+2{L_0}^2-\frac{{\Delta{}l_0}^2}{2}\right)=\\
+	&\frac{{\Delta{}l_0}^2S^2}{4}+{\Delta{}l_0}^2{L_0}^2-\frac{{\Delta{}l_0}^4}{4}
+\end{split}
+\end{equation*}
+
+Подставляем в неравенство
+
+\begin{equation*}
+	\sqrt{\frac{{\Delta{}l_0}^2S^2}{4}+{\Delta{}l_0}^2{L_0}^2-\frac{{\Delta{}l_0}^4}{4}}
+	< S\cdot{}L_0\cdot\cos\left(\alpha - \Delta\alpha\right)
+\end{equation*}
+\begin{equation*}
+	\frac{{\Delta{}l_0}^2S^2}{4}+{\Delta{}l_0}^2{L_0}^2-\frac{{\Delta{}l_0}^4}{4}
+	< S^2\cdot{}{L_0}^2\cdot\cos^2\left(\alpha - \Delta\alpha\right),
+\end{equation*}
+
+при этом должно выполняться условие
+$\frac{{\Delta{}l_0}^2S^2}{4}+{\Delta{}l_0}^2{L_0}^2-\frac{{\Delta{}l_0}^4}{4}\ge
+0$. Т.к $S^2\cdot{}{L_0}^2\cdot\cos^2\left(\alpha - \Delta\alpha\right)\ge0$,
+дополнительную проверку на неотрицательное значение подкоренного выражения можно
+не выполнять.
+
+\begin{equation*}
+	{\Delta{}l_0}^2{L_0}^2-S^2\cdot{}{L_0}^2\cdot\cos^2\left(\alpha -
+	\Delta\alpha\right) < \frac{{\Delta{}l_0}^4}{4} - \frac{{\Delta{}l_0}^2S^2}{4}
+\end{equation*}
+\begin{equation*}
+	{L_0}^2\left({\Delta{}l_0}^2-S^2\cos^2\left(\alpha -
+	\Delta\alpha\right)\right)
+	< \frac{{\Delta{}l_0}^4 - {\Delta{}l_0}^2S^2}{4}
+\end{equation*}
+\begin{equation*}
+	\left\{
+		\begin{aligned}
+			{L_0}^2 &< 
+			\frac{{\Delta{}l_0}^4 - {\Delta{}l_0}^2S^2}{4\left({\Delta{}l_0}^2-
+			S^2\cos^2\left(\alpha - \Delta\alpha\right)\right)},~
+			{\Delta{}l_0}^2-S^2\cos^2\left(\alpha - \Delta\alpha\right)>0
+			\\
+			{L_0}^2 &>
+			\frac{{\Delta{}l_0}^4 - {\Delta{}l_0}^2S^2}{4\left({\Delta{}l_0}^2-
+			S^2\cos^2\left(\alpha - \Delta\alpha\right)\right)},~
+			{\Delta{}l_0}^2-S^2\cos^2\left(\alpha - \Delta\alpha\right)<0
+			\\
+		\end{aligned}
+	\right.
+\end{equation*}
+
+Проанализируем систему неравенств. Левые части неравенств представлены
+положительным числом. Первое неравенство может выполняться только при условии,
+что его правая сторона также положительное число. Ограничение на знаменатель
+задано в условиях неравенства. Это означает, что числитель должен быть 
+положительным. Проверим это условие.
+
+\begin{equation*}
+	{\Delta{}l_0}^4 - {\Delta{}l_0}^2S^2 =
+	{\Delta{}l_0}^2\cdot\left({\Delta{}l_0}^2-S^2\right)
+\end{equation*}
+
+$S>\Delta{}l_0$ т.к. разность хода звуковых колебаний между двумя точками не
+может превышать расстояния между этими точками. Отсюда
+
+\begin{equation}
+	\boxed{
+		{\Delta{}l_0}^4-{\Delta{}l_0}^2S^2<0
+	}\label{l_S_rel}
+\end{equation}
+
+Это означает, что первое неравенство системы невыполнимо.
+
+Второе неравенство имеет отрицательный знаменатель в соответствии с условиями
+этого неравенства и отрицательный числитель, как показано в (\ref{l_S_rel}). Это
+означает, что правая часть этого неравенства строго неотрицательна, а значит,
+существует множество значений $L_0$, для которых оно не выполняется и множество
+значений $L_0$, для которых оно выполняется.
+
+\begin{equation}
+	\boxed {
+		L_0 >
+		\sqrt{\frac{{\Delta{}l_0}^4 - {\Delta{}l_0}^2S^2}{4\left({\Delta{}l_0}^2-
+		S^2\cos^2\left(\alpha - \Delta\alpha\right)\right)}}
+	}\label{L_delta_alpha}
+\end{equation}
+
+Определим условия, при которых знаменатель в подкоренном выражении
+формулы~(\ref{L_delta_alpha}) принимает отрицательные значения.
+
+\bigskip
+
+\textbf{Алгоритм определения размера ближней зоны.}
+
+1. Выбрать базовое значение $L_0$ из диапазона $5\ldots10 S$;
+
+2. Выбрать максимальную погрешность $\Delta\alpha$;
+
+3. Выбрать угол $\alpha_0$ для которого необходимо определить минимальное
+расстояние;
+
+4. Расчитать $\Delta_0$ по формуле~(\ref{delta_l_cos_alpha});
+
+5. Рассчитать $\cos\alpha$ по формуле~(\ref{cos_alpha_SL}), подставив
+$\Delta=\Delta_0$, определить~$\alpha$;
+
+6. Рассчитать уточненное значение $L_0$ по формуле~(\ref{L_delta_alpha});
+
+7. Пункты 3\ldots6 необходимо выполнить для всех интересующих углов.
+
+\bigskip
+Результат расчета размера ближней зоны, за пределами которой погрешность
+опредления направления не превышает $2^\circ$ приведен на рисунке~\ref{nz_plot}.
+
+\begin {figure}
+	\begin{center}
+		\input{nz_gnuplot}
+	\end{center}\label{nz_plot}
+	\caption{Граница ближней зоны при погрешности определения угла $2^\circ$}
+\end {figure}
+
+\bigskip
+\textbf{Определение направления на одиночный источник звука}
+
+Физическая основа определения направления на источник звука --- разность хода
+фазового фронта от источника к нескольким микрофонам. Определив разность хода
+можно рассчитать направление на источник. В этой работе рассматривается два
+способа:
+
+--- Корреляция между сигналами с микрофонов
+
+--- Искажения спектра при суммировании сигналов.
+
+Рассмотрим искажения спектра подробнее. Пусть в системе установлено два
+микрофона на расстоянии $S$ друг от друга. Источник смещен относительно нормали
+к плоскости микрофонов. Для начала будем считать, что источник формирует звук на
+одной единственной частоте $\omega$.
+
+Сигналы на каждом из микрофонов:
+\begin{equation*}
+	s_1(t) = \sin\left(\omega{}t+\phi_1\right)
+\end{equation*}
+\begin{equation*}
+	s_2(t) = \sin\left(\omega{}t+\phi_2\right)
+\end{equation*}
+
+Просуммируем эти сигналы (как это происходит в антенной решетке)
+\begin{equation*}
+	\begin{aligned}
+		s_1(t) + s_2(t) &=
+		\sin\left(\omega{}t+\phi_1\right)+\sin\left(\omega{}t+\phi_2\right) \\
+		&= 2\sin\frac{\omega{}t+\phi_1+\omega{}t+\phi_2}{2}\cdot
+		\cos\frac{\omega{}t+\phi_1-\omega{}t-\phi_2}{2} = \\
+		&= 2\sin\left(\omega{}t+\frac{\phi_1+\phi_2}{2}\right)
+		\cos\frac{\phi_1-\phi_2}{2} = \\
+		&= 2\sin\left(\omega{}t+\frac{\phi_1+\phi_2}{2}\right)
+		\cos\frac{\Delta\phi}{2}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\Delta\phi=\frac{\Delta{}l\cdot\omega}{C}=2\pi\Delta{}l\frac{f}{C}
+\end{equation*}
+\begin{equation*}
+	s_1(t) + s_2(t) = 2\sin\left(\omega{}t+\frac{\phi_1+\phi_2}{2}\right)
+		\cos\frac{\Delta{}l\cdot\omega}{2C}
+\end{equation*}
+
+При построении спектра сигнала составляющая
+$\sin\left(\omega{}t+\frac{\phi_1+\phi_2}{2}\right)$ является копией оригинального
+сигнала, сдинутого по фазе. При любых значений $\phi_1$ и $\phi_2$ спектр этого
+сдвинутого сигнала совпадает с исходным. Другая составляющая ---
+$\cos\frac{\Delta\phi}{2}$ --- зависит только от разности фаз.
+А разность фаз в свою очередь является функцией частоты исходного сигнала.
+Поэтому при расчете спектра эта составляющая также  превращается в функцию
+частоты.
+
+Определим спектры сигналов на частоте $\omega=2\pi{}f$:
+\begin{equation*}
+	\begin{aligned}
+		F_{s_1(t)} &= \frac{1}{\sqrt{2\pi}}\int\limits_{-\infty}^\infty
+	                  \frac{1}{2i}\left(e^{i\omega{}t+i\phi_1}-e^{-i\omega{}t-i\phi_1}\right)\cdot{}e^{-i\omega{}t}dt=\\
+	               &= \frac{1}{\sqrt{2\pi}}\int\limits_{-\infty}^\infty
+	                  \frac{1}{2i}\left(e^{i\omega{}t+i\phi_1}\cdot{}e^{-i\omega{}t}-e^{-i\omega{}t-i\phi_1}\cdot{}e^{-i\omega{}t}\right)dt=\\
+	               &= \frac{1}{\sqrt{2\pi}}\int\limits_{-\infty}^\infty
+	                  \frac{1}{2i}\left(e^{i\omega{}t+i\phi_1-i\omega{}t}-e^{-i\omega{}t-i\phi_1-i\omega{}t}\right)dt=\\
+	               &= \frac{1}{\sqrt{2\pi}}\int\limits_{-\infty}^\infty
+	                  \frac{1}{2i}\left(e^{i\phi_1}-e^{-i(2\omega{}t+\phi_1)}\right)dt=\\
+	               &= \frac{1}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty
+	                  e^{i\phi_1}dt -
+	                  \frac{1}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty
+	                  e^{-i(2\omega{}t+\phi_1)}dt=\\
+	               &= \frac{e^{i\phi_1}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty
+	                  dt -
+	                  \frac{e^{-i\phi_1}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty
+	                  e^{-2i\omega{}t}dt
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	F_{s_2(t)} = \frac{e^{i\phi_2}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty
+                  dt -
+                  \frac{e^{-i\phi_2}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty
+                  e^{-2i\omega{}t}dt
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		F_{s_1(t)+s_2(t)} &=
+		             \frac{e^{i\phi_1}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty dt
+		             - \frac{e^{-i\phi_1}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty
+	                 e^{-2i\omega{}t}dt + 
+	                 \frac{e^{i\phi_2}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty dt
+		             - \frac{e^{-i\phi_2}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty
+	                 e^{-2i\omega{}t}dt=\\
+	                 &=\left(\frac{e^{i\phi_1}}{i\sqrt{8\pi}}+\frac{e^{i\phi_2}}{i\sqrt{8\pi}}\right)
+	                 \int\limits_{-\infty}^\infty dt
+	                 - \left(\frac{e^{-i\phi_1}}{i\sqrt{8\pi}} +
+	                         \frac{e^{-i\phi_2}}{i\sqrt{8\pi}}\right)
+	                 \int\limits_{-\infty}^\infty{}e^{-2i\omega{}t}dt=\\
+	                 &=\frac{e^{i\phi_1}+e^{i\phi_2}}{i\sqrt{8\pi}}
+	                 \int\limits_{-\infty}^\infty dt
+	                 - \frac{e^{-i\phi_1}+e^{-i\phi_2}}{i\sqrt{8\pi}}
+	                 \int\limits_{-\infty}^\infty{}e^{-2i\omega{}t}dt=\\
+	\end{aligned}
+\end{equation*}
+
+Выразим $\phi_2=\phi_1-\Delta\phi$ и упростим числители дробей:
+\begin{equation*}
+	e^{i\phi_1}+e^{i\phi_2}=e^{i\phi_1}+e^{i\phi_1-i\Delta\phi}=e^{i\phi_1}+e^{i\phi_1}e^{-i\Delta\phi}=e^{i\phi_1}\left(1+e^{-i\Delta\phi}\right)
+\end{equation*}
+\begin{equation*}
+	e^{-i\phi_1}+e^{-i\phi_2}=e^{-i\phi_1}+e^{-i\phi_1+i\Delta\phi}=e^{-i\phi_1}+e^{-i\phi_1}e^{i\Delta\phi}=e^{-i\phi_1}\left(1+e^{i\Delta\phi}\right)
+\end{equation*}
+
+Проанализируем составные части выражений (интегралы). Значение интеграла
+$\int\limits_{-\infty}^\infty dt$ стремится к бесконечности, тогда как
+абсолютное значение интеграла $\int\limits_{-\infty}^\infty{}e^{-2i\omega{}t}dt$
+не превышает 2 (сумма синуса и косинуса). Таким образом, при определении
+спектральной плотности мощности (делении на диапазон $[-\infty\dots{}\infty]$)
+значение первого интеграла сойдется к действительному числу, а второго - к нулю.
+Поэтому вторыми интегралами можно пренебречь и переписать формулы в следующем
+виде:
+
+\begin{equation*}
+	F_{s_1(t)} \approx
+                 \frac{e^{i\phi_1}}{i\sqrt{8\pi}}\int\limits_{-\infty}^\infty{}dt
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		F_{s_1(t)+s_2(t)} & \approx
+	                 \frac{e^{i\phi_1}+e^{i\phi_2}}{i\sqrt{8\pi}}
+	                 \int\limits_{-\infty}^\infty dt =
+	                 \frac{e^{i\phi_1}\left(1+e^{-i\Delta\phi}\right)}{i\sqrt{8\pi}}
+	                 \int\limits_{-\infty}^\infty dt = 
+	                 \left(1+e^{-i\Delta\phi}\right)\frac{e^{i\phi_1}}{i\sqrt{8\pi}}
+	                 \int\limits_{-\infty}^\infty dt = \\
+	               &=\left(1+\cos\Delta\phi-i\sin\Delta\phi\right)\frac{e^{i\phi_1}}{i\sqrt{8\pi}}
+	               \int\limits_{-\infty}^\infty dt
+	\end{aligned}
+\end{equation*}
+
+Видно, что спектры отличаются единственным множителем
+\begin{equation*}
+K^*(\Delta\phi)=1+\cos\Delta\phi-i\sin\Delta\phi
+\end{equation*}
+Этот множитель выражает изменения в амлитуде и фазе суммарного сигнала
+относительно одного из исходных.
+
+\begin{equation}
+	\boxed{
+		K=1+\cos\frac{2\pi{}f\cdot\Delta{}l}{C}-i\sin\frac{2\pi{}f\cdot\Delta{}l}{C} =
+		1+e^{-i\frac{2\pi{}f\cdot\Delta{}l}{C}} }\label{amplitude_link_k}
+\end{equation}
+
+Формула~\ref{amplitude_link_k} связывет амплитуды оригинального и суммарного
+сигналов. Эта формула может применяться для сравнения сигналов и определения направления
+на источник. Абсолютное значение разности фаз определяет частоту колебаний в
+спектра разностного сигнала. Для определения модуля $\Delta{}l$ достаточно
+проанализировать действительную часть формулы~\ref{amplitude_link_k}. Построим
+спектр $H(\Delta{}l_v)$, где $\Delta{}l_v$ --- изменяемое значение разности фаз
+
+\begin{equation*}
+	H(\Delta{}l_v) = \int\limits_{-\infty}^{\infty}
+	\left(1+e^{-i\frac{2\pi{}\cdot\Delta{}l}{C}f}\right)e^{-i\frac{2\pi{}\cdot\Delta{}l_v}{C}f}
+	df
+\end{equation*}
+
+В этой формуле $\frac{2\pi{}\cdot\Delta{}l}{C}$ выступают в роли круговой
+частоты $\omega_K(\Delta{}l)$. При работе с спектром, полученным из дискретного
+сигнала с использованием БПФ формула должна быть преобразована на основании
+следующих рассуждений.
+
+1. Частота сигнала ограничена значениями $\left[-F_d/2\dots{}F_d/2\right]$
+
+2. Операция интегрирования должна быть заменена сумированием.
+
+3. Комплексный множитель формируется из частоты колебаний
+$f_K\left(\Delta{}l_v\right)$ амплитуды отношения спектров и частоты
+дискретизации сигнала.
+
+\begin{equation*}
+	H(\Delta{}l_v) = \sum_{f=-F_d/2}^{F_d/2}
+	\left(1+e^{-i\frac{2\pi{}\cdot\Delta{}l}{C}f}\right) 
+	e^{-i\cdot{}2\pi{}\frac{f_K\left(\Delta{}l_v\right)}{F_d} f}
+\end{equation*}
+
+Спектр будет принимать максимальные значения при совпадении круговых частот
+колебания отношения спектров и комплексного множителя. Это выполняется при
+выполнении условия
+$\frac{f_K\left(\Delta{}l_v\right)}{F_d}=\frac{\Delta{}l}{C}$, откуда
+
+\begin{equation*}
+	f_K\left(\Delta{}l_v\right)=f_K\left(\Delta{}l\right)=\frac{\Delta{}l\cdot{}F_d}{C}
+\end{equation*}
+
+Определим пределы, в которых достаточно изменять значение $F_K$. Очевидно, что
+при правильной работе аппаратуры разность хода фазового фронта не может
+превысить расстояние между микрофонами, т.е. $\Delta{}l\le{}S$. Отсюда
+
+\begin{equation*}
+	0\le{}f_K\le\frac{S\cdot{}F_d}{C}
+\end{equation*}
+
+Для пересчета частоты колебания отношения спектров в разность хода фазового
+фронта можно использовать формулу
+
+\begin{equation*}
+	\Delta{}l = \frac{f_K\cdot{}C}{F_d}
+\end{equation*}
+
+Используя формулу~(\ref{cos_alpha_SL}) можно рассчитать направление на
+предполагаемый источник звука.
+
+\end{document}

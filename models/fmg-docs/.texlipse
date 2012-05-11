@@ -1,0 +1,13 @@
+#TeXlipse project settings
+#Sat Nov 19 11:44:43 MSK 2011
+builderNum=2
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=tmp
+mainTexFile=document.tex
+outputFile=fmg-research.pdf
+langSpell=ru
+markDer=true
+srcDir=
