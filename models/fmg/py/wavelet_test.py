@@ -48,7 +48,7 @@ def parse_options(argv = None):
             run_opts["wavelet"] = a
             
         if o in ("-l","--level"):
-            run_opts["level"] = a
+            run_opts["level"] = int(a)
             
     run_opts["n_files"] = len(run_opts["files"])
     if not run_opts["n_files"]:
@@ -69,6 +69,7 @@ class SwtTransform:
         self._max_level = pywt.swt_max_level(self._factor2_len)
         if max_level and self._max_level>max_level:
             self._max_level = max_level
+        print "Количество уровней детализации", self._max_level
         
         self._wvl = pywt.swt(self._wv._sound, self._wavelet, self._max_level)
         self.list2matrix()
@@ -121,6 +122,67 @@ class SwtTransform:
         max_val = numpy.max(numpy.max(swt_mtx_exc))
         min_val = numpy.min(numpy.min(swt_mtx_exc))
         return (swt_mtx_exc-min_val) / (max_val-min_val)
+        
+    def find_cross_pattern(self, img, pattern, crosses):
+        pattern_sum = numpy.sum(pattern)
+        pattern_h = pattern.shape[0]
+        pattern_w = pattern.shape[1]
+        for i in range(img.shape[0]-pattern_w):
+            for j in range (img.shape[1]-pattern_h):
+                part_sum = numpy.sum(numpy.multiply(pattern,img[i:i+pattern_h,j:j+pattern_w]))
+                if part_sum==pattern_sum:
+                    crosses[i,j] = 1.0
+                    img[i:i+20,j:j+20] = 0.0
+                    j += 20
+    
+    def find_max(self, alternate_size):
+        tmp_sig = self.swt_resize(alternate_size)
+        tmp_min = numpy.zeros(tmp_sig.shape)
+        tmp_max = numpy.zeros(tmp_sig.shape)
+        for i in range(2,alternate_size[0]-2):
+            for j in range (2,alternate_size[1]-2):
+                if tmp_sig[i,j]<=tmp_sig[i,j-1] and tmp_sig[i,j]<=tmp_sig[i,j+1] and tmp_sig[i,j]<=tmp_sig[i,j-2] and tmp_sig[i,j]<=tmp_sig[i,j+2]:
+                    tmp_min[i,j] = 1.0
+                else:
+                    if tmp_sig[i,j]<=tmp_sig[i-1,j] and tmp_sig[i,j]<=tmp_sig[i+1,j] and tmp_sig[i,j]<=tmp_sig[i-2,j] and tmp_sig[i,j]<=tmp_sig[i+2,j]:
+                        tmp_min[i,j] = 1.0
+                if tmp_sig[i,j]>=tmp_sig[i,j-1] and tmp_sig[i,j]>=tmp_sig[i,j+1] and tmp_sig[i,j]>=tmp_sig[i,j-2] and tmp_sig[i,j]>=tmp_sig[i,j+2]:
+                    tmp_max[i,j] = 1.0
+                else:
+                    if tmp_sig[i,j]>=tmp_sig[i-1,j] and tmp_sig[i,j]>=tmp_sig[i+1,j] and tmp_sig[i,j]>=tmp_sig[i-2,j] and tmp_sig[i,j]>=tmp_sig[i+2,j]:
+                        tmp_max[i,j] = 1.0
+                    
+        pylab.subplot(2,1,1)
+        pylab.imshow(numpy.flipud(tmp_min + tmp_max*2.0 + tmp_sig*0.1))
+        
+        tmp_crosses_min = numpy.zeros(tmp_sig.shape)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,1,0],[1,1,1],[0,1,0]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[1,0,1],[0,1,0],[1,0,1]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,0,1,0],[0,1,1,1],[1,1,0,0],[0,1,0,0]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,1,0,0],[1,1,0,0],[0,1,1,1],[0,0,1,0]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,1,0,0],[1,1,1,0],[0,0,1,1],[0,0,1,0]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,0,1,0],[0,0,1,1],[1,1,1,0],[0,1,0,0]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,1,0],[0,1,1],[1,1,0],[0,1,0]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,1,0],[1,1,0],[0,1,1],[0,1,0]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,0,1,0],[1,1,1,1],[0,1,0,0]]), tmp_crosses_min)
+        self.find_cross_pattern(tmp_min, numpy.matrix([[0,1,0,0],[1,1,1,1],[0,0,1,0]]), tmp_crosses_min)
+        #self.find_cross_pattern(tmp_min, numpy.matrix([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]), tmp_crosses_min)
+        tmp_crosses_max = numpy.zeros(tmp_sig.shape)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,1,0],[1,1,1],[0,1,0]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[1,0,1],[0,1,0],[1,0,1]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,0,1,0],[0,1,1,1],[1,1,0,0],[0,1,0,0]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,1,0,0],[1,1,0,0],[0,1,1,1],[0,0,1,0]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,1,0,0],[1,1,1,0],[0,0,1,1],[0,0,1,0]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,0,1,0],[0,0,1,1],[1,1,1,0],[0,1,0,0]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,1,0],[0,1,1],[1,1,0],[0,1,0]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,1,0],[1,1,0],[0,1,1],[0,1,0]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,0,1,0],[1,1,1,1],[0,1,0,0]]), tmp_crosses_max)
+        self.find_cross_pattern(tmp_max, numpy.matrix([[0,1,0,0],[1,1,1,1],[0,0,1,0]]), tmp_crosses_max)
+        #self.find_cross_pattern(tmp_max, numpy.matrix([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]), tmp_crosses_max)
+        
+        pylab.subplot(2,1,2)
+        pylab.imshow(numpy.flipud(tmp_crosses_min + tmp_crosses_max + tmp_sig*0.1))
+        
 
 
 def main(argv=None):
@@ -134,8 +196,9 @@ def main(argv=None):
     for f_name in run_opts["files"]:
         swtt.transform(f_name,run_opts["level"])
         #swtt.transform_high(run_opts["level"])
-        pylab.subplot(run_opts["n_files"],1,f_cnt)
-        swtt.plot((1000,4000))
+        #pylab.subplot(run_opts["n_files"]*3,1,f_cnt)
+        swtt.plot((350,1000))
+        swtt.find_max((350,1000))
         f_cnt += 1
     
     pylab.show()
