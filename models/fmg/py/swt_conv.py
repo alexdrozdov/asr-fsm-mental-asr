@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/Library/Frameworks/Python.framework/Versions/2.7/bin/python
 # -*- coding: utf-8 -*-
 
 import sys
@@ -116,6 +116,12 @@ class SwtTransform:
         self._wvl = pywt.swt(self._wv._sound, self._wavelet, self._max_level)
         self.list2matrix()
         
+    def wavelet_length(self):
+        return self._swt_matrix.shape[1]
+    
+    def wavelet_range(self, rng):
+        return self._swt_matrix[:,rng[0]:rng[1]]
+        
     def transform_high(self, max_level = None):
         self._wv = music.WavSound(44100,numpy.copy(self._swt_matrix[0,:]))
         self._original_len = self._wv.length()
@@ -141,8 +147,13 @@ class SwtTransform:
     def plot_edges(self):
         pylab.imshow(numpy.flipud(self.edges+ self.tmp_sig*0.1))
         
-    def plot_extremums(self):
-        pylab.imshow(numpy.flipud(self.crosses + self.tmp_sig*0.1))
+    def plot_extremums(self, horz_lines = None, vert_lines = None):
+        img = numpy.flipud(self.crosses + self.tmp_sig*0.1)
+        if None != horz_lines:
+            img[horz_lines,:] = 1.0
+        if None != vert_lines:
+            img[:,vert_lines] = 1.0
+        pylab.imshow(img)
     
     def list2matrix(self):
         m = len(self._wvl)
