@@ -66,7 +66,7 @@ PROTO=$(wildcard *.proto)
 PROTO_CC=$(PROTO:%.proto=%.pb.cc)
 PROTO_OBJ=$(PROTO_CC:%.cc=$(BUILD_DIR)/%.o)
 
-all:$(BUILD_DIR)/$(PROG) wav_input spectrum_v1 $(install_targets)
+all:$(BUILD_DIR)/$(PROG) wav_input spectrum_v1 wavelet_v1 $(install_targets)
 
 $(BUILD_DIR)/$(PROG): dirs xmlsup $(PROTO_CC) $(PROTO_OBJ) $(OBJS)
 	@echo [LD] $(PROG); \
@@ -103,6 +103,9 @@ wav_input: FORCE
 spectrum_v1 : FORCE xmlsup
 	@$(MAKE) -C ./processors/spectrum_v1/ AUXBUILD=$(AUXBUILD)
 	
+wavelet_v1 : FORCE xmlsup
+	@$(MAKE) -C ./processors/wavelet_v1/ AUXBUILD=$(AUXBUILD)
+	
 xmlsup : FORCE
 	@$(MAKE) -C ./xml_support/
 
@@ -117,4 +120,5 @@ clean:
 	@$(MAKE) clean -C ./wav_input/
 	@$(MAKE) clean -C ./xml_support/
 	@$(MAKE) clean -C ./processors/spectrum_v1
+	@$(MAKE) clean -C ./processors/wavelet_v1
 
