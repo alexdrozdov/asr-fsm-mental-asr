@@ -8,7 +8,10 @@
 #include <math.h>
 #include <sstream>
 
+#include <wavelet1d.h>
+
 #include "wavelet_processor.h"
+#include "array2d.h"
 #include "asr_core.h"
 #include "xml_support/xml_support.h"
 
@@ -28,39 +31,31 @@ CWaveletProcessor::CWaveletProcessor(std::string filename) {
 
 	szProcessorName = xmlGetStringValue(xml, "/processor/name");
 	enabled         = xmlGetBooleanValue(xml,"/processor/enabled",false);
-	adjust_power    = xmlGetBooleanValue(xml,"/processor/adjust_power",false);
-	if (adjust_power) {
-		power_norm = xmlGetDoubleValue(xml,"/processor/adjust_power/norm",1.0);
-	}
-	adjust_max      = xmlGetBooleanValue(xml,"/processor/adjust_max",false);
-	out_count       = xmlGetIntValue(xml,"/processor/frequencies/count",-1);
+	level_count     = xmlGetIntValue(xml,"/processor/levels/value",-1);
+	frame_size      = xmlGetIntValue(xml,"/processor/frame_length/value",-1);
 	trigger_id      = xmlGetIntValue(xml,"/processor/id",-1);
+
+	minwindowsize = xmlGetIntValue(xml, "/processor/limits/min_frame_size/value", -1);
+	maxwindowsize = xmlGetIntValue(xml, "/processor/limits/max_frame_size/value", -1);
+
+	level_count++;
+	out_count = level_count;
 
 	if (out_count < 1) {
 		cout << "CWaveletProcessor::CWaveletProcessor error: out_count must be at least 1" << endl;
 		return;
 	}
 
+	src_frame.resize(frame_size);
+	src_frame_usage = 0;
+
 	outs.resize(out_count);
 	prev_outs.resize(out_count);
-	frequencies.resize(out_count);
 
-	powers.resize(out_count);
-	for (int i=0;i<out_count;i++) {
-		std::ostringstream stream;
-		stream << i;
-		string val_path = "/processor/frequencies/i" + stream.str() + "/";
+	max_dwt_repeat = 1; //Рассчитываем максимальное значение прореживания. Настолько необходимо продублировать каждый отсчет наиболее прореженного сигнала, чтобы получить полноценную матрицу вейвлет преобразования
+	for (int i=0;i<level_count;i++) max_dwt_repeat *= 2;
 
-		int nid    = xmlGetIntValue(xml,(val_path+"id").c_str(),0);
-		double frq = xmlGetDoubleValue(xml,(val_path+"value").c_str(),0.0);
-
-		frequencies[i] = frq;
-		outs[i].out_id = nid;
-		prev_outs[i].out_id = nid;
-
-		powers[i].r = 0.0;
-		powers[i].i = 0.0;
-	}
+	arr_dwt = new CArray2d(frame_size, level_count);
 
 	asr->RegisterProcessor((CBaseProcessor*)this);
 
@@ -70,56 +65,61 @@ CWaveletProcessor::CWaveletProcessor(std::string filename) {
 
 int CWaveletProcessor::ProcessInput(pprocess_task pt) {
 	int *buf = pt->buf;
-	int sample_count = pt->sample_count;
+	int unproccessed_samples = pt->sample_count;
 
-	//При необходимости вычисляем полную мощность действующего сигнала
-	if (adjust_power) {
-		power = 0;
-		for (int j=0;j<sample_count;j++) {
-			power += fabs((double) buf[j]);
+	int cnt = 0;
+	while (unproccessed_samples>0) {
+		//Заполняем буфер для wavelet1d
+		int frame_underrun = frame_size - src_frame_usage; //Количество незаполненных ячеек во входном буфере
+		int copy_count = frame_underrun>unproccessed_samples?unproccessed_samples:frame_underrun;
+
+		unproccessed_samples -= copy_count;
+		for (int i=0;i<copy_count;i++) {
+			src_frame[src_frame_usage] = (double)buf[cnt] * sample_scale;
+			src_frame_usage++;
+			cnt++;
 		}
-	}
-
-	//power = sqrt(power);
-
-	//Вычисляем мощности каждой из спектральных составляющих
-	int n_eff_frequencies = out_count;
-	if (adjust_power) {
-		n_eff_frequencies--;
-		outs[out_count-1].value = power / power_norm;
-	}
-	for (int i=0;i<n_eff_frequencies;i++) {
-		powers[i].r = 0.0;
-		powers[i].i = 0.0;
-		for (int j=0;j<pt->sample_count;j++) {
-			powers[i].r += fdds[ dds_states[i].pnt ] * (double)buf[j];
-			powers[i].i += fdds[ dds_states[i].pnt2 ] * (double)buf[j];
-
-			dds_states[i].pnt  = (dds_states[i].pnt + dds_states[i].pnt_incr) & dds_states[i].pnt_mask;
-			dds_states[i].pnt2 = (dds_states[i].pnt2 + dds_states[i].pnt_incr) & dds_states[i].pnt_mask;
+		if (src_frame_usage<frame_size) {
+			break; //Не удалось заполнить до конца буфер. Значит, обработать его также не получится. Выходим и ждем пока в следующий раз этот буфер не дозаполнят
 		}
 
-		if (adjust_power) {
-			if (0.0 == power) {
-				outs[i].value = 0.0;
-			} else {
-				outs[i].value = sqrt(powers[i].r*powers[i].r + powers[i].i*powers[i].i) / power;
+		vector<double> swt_output;
+		int length;
+		swt(src_frame, level_count-1, "db2", swt_output, length);
+		int cur = 0;
+		int max_rows = (int)swt_output.size() / length;
+		cout << max_rows << endl;
+		for (int i=0;i<max_rows;i++) {
+			for (int j=0;j<length;j++)
+				arr_dwt->operator ()(i,j) = swt_output[cur++];
+		}
+		arr_dwt->save_to_file("dwt_arr.txt");
+
+		src_frame_usage = 0;
+	}
+
+	//Копируем результаты расчета в очередь выходных результатов
+	for (int i=0;i<frame_size;i++) {
+		output_snapshot os;
+		os.outputs.resize(level_count);
+		current_time += time_increment;
+		os.snapshot_time = current_time;
+		for (int j=0;j<level_count;j++) os.outputs[j] = arr_dwt->operator ()(j, i);
+		snapshots.push(os);
+
+		if (dump_enabled && dump_to_file) {
+			dump_stream << "TIME: " << current_time << " OUTS: ";
+			for (int i=0;i<out_count;i++) {
+				dump_stream << outs[i].value << " ";
 			}
-		} else {
-			outs[i].value = sqrt(powers[i].r*powers[i].r + powers[i].i*powers[i].i);
+			dump_stream << endl;
+		} else  if (dump_enabled) {
+			cout << "TIME: " << current_time << " OUTS: ";
+			for (int i=0;i<out_count;i++) {
+				cout << outs[i].value << " ";
+			}
+			cout << endl;
 		}
-	}
-
-	if (dump_enabled && dump_to_file) {
-		for (int i=0;i<out_count;i++) {
-			dump_stream << outs[i].value << " ";
-		}
-		dump_stream << endl;
-	} else  if (dump_enabled) {
-		for (int i=0;i<out_count;i++) {
-			cout << outs[i].value << " ";
-		}
-		cout << endl;
 	}
 	return 0;
 }
@@ -130,34 +130,8 @@ int CWaveletProcessor::Initialize(pproc_math_init pmi) {
 		return 1;
 	}
 	samplerate = pmi->samplerate;
-
-	if (pmi->samplerate > MAX_SAMPLERATE) {
-		cout << "CSpectrumProcessor::Initialize error - samplerate (" << pmi->samplerate << ") supplied exides allowed (" << MAX_SAMPLERATE << ")" << endl;
-		return 1;
-	}
-	if (pmi->samplerate < 1) {
-		cout << "CSpectrumProcessor::Initialize error - samplerate (" << pmi->samplerate << ") is lesser than allowed" << endl;
-		return 1;
-	}
-
-	//Инициализируем таблицу DDS
-	v2N  = (int)ceil(log2(ceil((double)samplerate/0.5)));
-	v2Nl = (int)pow(2.0,(double)v2N);
-	v2Nlh = v2Nl / 2;
-
-	fdds.resize(v2Nl);
-	for (int i=0;i<v2Nl;i++) {
-		fdds[i] = cos(2*M_PI*(double)i / (double)v2Nl);
-	}
-
-	double freq_step = (double)samplerate / (double)v2Nl;
-	dds_states.resize(out_count);
-	for (int i=0;i<out_count;i++) {
-		dds_states[i].pnt  = 0;
-		dds_states[i].pnt2 = v2Nlh / 2;
-		dds_states[i].pnt_mask = v2Nl-1;
-		dds_states[i].pnt_incr = (int)((double)frequencies[i] / freq_step);
-	}
+	sample_scale = 1.0 / pow(2.0, (double)(pmi->bitspersample-1));
+	arr_dwt->clear_file("dwt_arr.txt");
 	return 0;
 }
 
@@ -216,6 +190,40 @@ int CWaveletProcessor::MkDump(bool enable, string file_name) {
 		}
 	}
 	return 0;
+}
+
+bool CWaveletProcessor::SupportsTimeflow() {
+	return false;
+}
+
+bool CWaveletProcessor::RevertTime(long long revert_time) {
+	return false;
+}
+
+void CWaveletProcessor::SetInitialTime(long long init_time) {
+	this->init_time = init_time;
+	this->current_time = init_time;
+	this->output_time = init_time;
+}
+
+void CWaveletProcessor::SetTimeIncrement(long long time_increment) {
+	this->time_increment = time_increment;
+}
+
+bool CWaveletProcessor::OutputsPresent() {
+	if (snapshots.size() > 0) return true;
+	return false;
+}
+
+void CWaveletProcessor::ShiftOutput() {
+	if (0 == snapshots.size()) return;
+	output_snapshot os =  snapshots.front();
+	snapshots.pop();
+	for (int i=0;i<out_count;i++) {
+		outs[i].value = os.outputs[i];
+		outs[i].out_id = i;
+	}
+	output_time = os.snapshot_time;
 }
 
 int wavelet_v1_init_tcl(Tcl_Interp* interp) {

@@ -113,6 +113,7 @@ class SwtTransform:
             self._max_level = max_level
         print "Количество уровней детализации", self._max_level
         
+        #print self._wv._sound
         self._wvl = pywt.swt(self._wv._sound, self._wavelet, self._max_level)
         self.list2matrix()
         
@@ -162,6 +163,9 @@ class SwtTransform:
         for r_cnt in range(m):
             for c_cnt in range(n):
                 self._swt_matrix[r_cnt,c_cnt] = self._wvl[r_cnt][1][c_cnt]
+                
+        #print self._swt_matrix
+        #print numpy.max(self._swt_matrix)
     
     def swt_resize(self,new_size):
         tmp_sig = scipy.signal.resample(self._swt_matrix,new_size[0], axis=0)

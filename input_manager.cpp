@@ -62,7 +62,7 @@ int CInputManager::read(int* buf,int samples) {
 	if (opened) {
 		return dl_init->read(buf,samples);
 	}
-	return 1;
+	return 0;
 }
 
 int CInputManager::close() {
@@ -170,6 +170,13 @@ bool CInputManager::set_samplerate(unsigned int samplerate) {
 		return true;
 
 	return false;
+}
+
+int CInputManager::get_bitpersample() {
+	if (library_loaded && dl_init->get_bitpersample!=NULL)
+		return (unsigned int)dl_init->get_bitpersample();
+
+	return 0;
 }
 
 CInputManager *inpm = NULL;

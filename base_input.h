@@ -21,6 +21,7 @@ typedef int (*inpdrv_read_proc)(int*, int);
 typedef int (*inpdrv_close_proc)(void);
 typedef int (*inpdrv_get_samplerate)(void);
 typedef int (*inpdrv_set_samplerate)(int);
+typedef int (*inpdrv_get_bitpersample)(void);
 
 typedef struct _dynamiclib_init {
 	unsigned int ck_size;
@@ -32,6 +33,8 @@ typedef struct _dynamiclib_init {
 
 	inpdrv_get_samplerate get_samplerate;
 	inpdrv_set_samplerate set_samplerate;
+
+	inpdrv_get_bitpersample get_bitpersample;
 
 	unsigned int asr_minor;          //Минимальная совместимая версия asr
 	unsigned int asr_major;          //Максимальная совместимая версия asr

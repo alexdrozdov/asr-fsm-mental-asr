@@ -68,7 +68,7 @@ def parse_options(argv = None):
     
 class FsmBuilder:
     class FsmState:
-        def __init__(self, state_id, name, train_data, output_data):
+        def __init__(self, state_id, name, train_data=None, output_data=None):
             self._id = state_id
             self._name = name
             self._train_data = train_data
@@ -80,11 +80,15 @@ class FsmBuilder:
             self._next_state = None
             self._input_links_count = 0
             self._output_links_count = 0
+            self._states = None
             
         def next_state(self, next_state = None):
             if None!=next_state:
                 self._next_state = next_state
             return self._next_state
+        
+        def name(self):
+            return self._name
         
         def input_links(self, count = None):
             if None != count:
@@ -95,6 +99,11 @@ class FsmBuilder:
             if None != count:
                 self._output_liks_count = count
             return self._output_liks_count
+        
+        def states(self, fsm_builder_states = None):
+            if None != fsm_builder_states:
+                self._states = fsm_builder_states
+            return self._states
         
         def min_state_time(self, min_time = None, def_state = None):
             if None != min_time and None != def_state:
@@ -108,16 +117,16 @@ class FsmBuilder:
                 self._max_time_def_state = def_state
             return (self._max_time, self._max_time_def_state)
         
-        def create_xml_property(self, xml, prop_name, prop_value):
-            return " " + prop_name + "=\"" + prop_value + "\""
+        def _create_xml_property(self, prop_name, prop_value):
+            return " " + prop_name + "=\"" + str(prop_value) + "\""
         def create_xml_str(self, fann_name):
             xml = ""
             xml += "<i" + str(self._id)
-            xml += self.create_xml_property("caption", self._name)
-            xml += self.create_xml_property("logic", "")
-            xml += self.create_xml_property("stable", "true")
-            xml += self.create_xml_property("fann", fann_name)
-            xml += self.create_xml_property("id", self._id)
+            xml += self._create_xml_property("caption", self._name)
+            xml += self._create_xml_property("logic", "")
+            xml += self._create_xml_property("stable", "true")
+            xml += self._create_xml_property("fann", fann_name)
+            xml += self._create_xml_property("id", self._id)
             xml += ">"
             
             xml += "<mintime"
@@ -168,9 +177,20 @@ class FsmBuilder:
             xml += "</output_links>"
             
             xml += "<state_coding"
-            xml += self._create_xml_property("count", "1")
+            xml += self._create_xml_property("count", str(self.output_links()))
             xml += ">"
+            for i in range(len(self._states)):
+                xml += "<i" + str(i)
+                xml += self._create_xml_property("caption", self._states[i].name())
+                xml += self._create_xml_property("fann", str(i))
+                xml += self._create_xml_property("state", str(i))
+                xml += "/>"
             xml += "</state_coding>"
+            
+            xml += "<friends"
+            xml += self._create_xml_property("count", "0")
+            xml += "/>"
+            
             xml += "</i" + str(self._id) + ">"
             
             return xml
@@ -179,6 +199,44 @@ class FsmBuilder:
     def __init__(self, file_name):
         self._swtt = swt_conv.SwtTransform("db2")
         self._file_name = file_name
+        
+    def create_xml(self, project_path):
+        if project_path[-1]!='/': project_path+='/'
+        if not os.path.exists(project_path): os.makedirs(project_path)
+        common_file_name = os.path.splitext(os.path.split(self._file_name)[1])[0]
+        
+        xml = "<trigger>"
+        xml += "<name>" + common_file_name + "</name>"
+        xml += "<type>neuro</type>"
+        xml += "<enabled>true</enabled>"
+        
+        xml += "<outputs count=\"" + str(len(self._pc.groups())) + "\"/>"
+        xml += "<inputs count=\"" + str(self._max_levels) + "\"/>"
+
+        xml += "<states count=\"" + str(len(self._pc.groups())) + "\" default=\"0\">"
+        state_cnt = 0
+        wvl_len = self._swtt.wavelet_length()
+        self.states = []
+        for c in self._pc.groups():
+            state_name = "st" + str(state_cnt)
+            fsm_state = FsmBuilder.FsmState(state_id=state_cnt, name=state_name)
+            fsm_state.input_links(self._max_levels)
+            fsm_state.output_links(len(self._pc.groups()))
+            fsm_state.states(self.states)
+            self.states.append(fsm_state)
+            state_cnt += 1
+            
+        for s in self.states:
+            state_xml = s.create_xml_str("./triggers/data/" + common_file_name + ".fann")
+            xml += state_xml
+        xml += "</states>"
+            
+        xml += "</trigger>"
+        
+        tcl_name = project_path + common_file_name + ".xml"
+        tcl_file = open(tcl_name, 'w')
+        tcl_file.write(xml)
+        tcl_file.close()
         
     def create_tcl(self, project_path):
         def build_state_out(full_count, active_out):
@@ -254,6 +312,7 @@ def main(argv=None):
         fsb = FsmBuilder(run_opts["files"][i])
         fsb.build()
         fsb.create_tcl(run_opts["folders"][i])
+        fsb.create_xml(run_opts["folders"][i])
 
 
 if __name__ == "__main__":

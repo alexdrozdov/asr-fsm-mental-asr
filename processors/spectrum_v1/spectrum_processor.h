@@ -32,6 +32,14 @@ public:
 	virtual int MkDump(bool enable);
 	virtual int MkDump(bool enable, std::string file_name);
 
+	virtual bool SupportsTimeflow();                         //Проверка поддержки управления временем
+	virtual bool RevertTime(long long revert_time);          //Возврат к указанному моменту времени
+	virtual void SetInitialTime(long long init_time);        //Установка текущего времени (например, на момент передачи буфера данных)
+	virtual void SetTimeIncrement(long long time_increment); //Установка шага увеличения времени на один отсчет данных
+
+	virtual bool OutputsPresent();                           //Проверка наличия необработанных выходов
+	virtual void ShiftOutput();                              //Поместить в выходной буфер очередные данные
+
 private:
 	std::vector<int> frequencies;
 
@@ -47,6 +55,8 @@ private:
 
 	bool adjust_power;
 	bool adjust_max;
+
+	bool output_used;
 };
 
 #ifdef __cplusplus

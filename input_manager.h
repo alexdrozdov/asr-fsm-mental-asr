@@ -30,6 +30,7 @@ public:
 	std::string get_driver_name();
 	unsigned int get_samplerate();
 	bool set_samplerate(unsigned int samplerate);
+	int get_bitpersample();
 
 	int LoadInputDriver(Tcl_Interp* interp,std::string libname);
 private:

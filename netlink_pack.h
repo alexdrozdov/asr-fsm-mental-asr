@@ -18,7 +18,7 @@
 
 #include "dsp_stream.pb.h"
 
-#define MAX_QUEUE_SIZE 200
+#define MAX_QUEUE_SIZE 20000
 
 #define FRAME_START  0xFB
 #define FRAME_END    0xFE

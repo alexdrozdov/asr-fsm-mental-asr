@@ -66,6 +66,8 @@ CSpectrumProcessor::CSpectrumProcessor(std::string filename) {
 
 	dump_to_file = false;
 	dump_enabled = false;
+
+	output_used = true;
 }
 
 int CSpectrumProcessor::ProcessInput(pprocess_task pt) {
@@ -121,6 +123,8 @@ int CSpectrumProcessor::ProcessInput(pprocess_task pt) {
 		}
 		cout << endl;
 	}
+	current_time += time_increment*pt->sample_count;
+	output_used = false;
 	return 0;
 }
 
@@ -216,6 +220,34 @@ int CSpectrumProcessor::MkDump(bool enable, string file_name) {
 		}
 	}
 	return 0;
+}
+
+
+bool CSpectrumProcessor::SupportsTimeflow() {
+	return false;
+}
+
+bool CSpectrumProcessor::RevertTime(long long revert_time) {
+	return false;
+}
+
+void CSpectrumProcessor::SetInitialTime(long long init_time) {
+	this->init_time = init_time;
+	this->current_time = init_time;
+	this->output_time = init_time;
+}
+
+void CSpectrumProcessor::SetTimeIncrement(long long time_increment) {
+	this->time_increment = time_increment;
+}
+
+bool CSpectrumProcessor::OutputsPresent() {
+	return !output_used;
+}
+
+void CSpectrumProcessor::ShiftOutput() {
+	output_time = current_time;
+	output_used = true;
 }
 
 int spectrum_v1_init_tcl(Tcl_Interp* interp) {
