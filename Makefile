@@ -6,6 +6,7 @@ ifeq ($(OS),Darwin)
           -I ./xml_support/ \
           -I ../../aux-packages/tcl8.5.9/generic/ \
           -I ../../aux-packages/build/include/ \
+          -I ../mental-fsm/p2vera/source/ \
           -DMACOSX -DAUXPACKAGES
     install_targets=install.macos
     PROTOC_PATH=$(shell pwd)/../../aux-packages/build/bin/
@@ -15,6 +16,7 @@ ifeq ($(OS),Darwin)
         -ldl \
         -L ./xml_support/obj/ -lxmlsup  \
         -L ../../aux-packages/build/lib/ -lprotobuf \
+        -L ../bin/libs/ -lp2vera \
         -rdynamic
 else
 ifeq ($(AUXBUILD),AUX)
@@ -22,6 +24,7 @@ ifeq ($(AUXBUILD),AUX)
           -I ../../aux-packages/tcl8.5.9/generic/ \
           -I ../../aux-packages/build/include/ \
           -I ./xml_support/ \
+          -I ../mental-fsm/p2vera/source/ \
           -DGNULINUX -DAUXPACKAGES
     PROTOC_PATH=$(shell pwd)/../../aux-packages/build/bin/
     
@@ -30,17 +33,20 @@ ifeq ($(AUXBUILD),AUX)
         -ldl \
         -L ./xml_support/obj/ -lxmlsup  \
         -L ../../aux-packages/build/lib/ -lprotobuf \
+        -L ../bin/libs/ -lp2vera \
         -rdynamic
 else
     CFLAGS_AUX= `pkg-config --cflags libxml-2.0` \
           `pkg-config --cflags protobuf` \
           -I ./xml_support/ \
+          -I ../mental-fsm/p2vera/source/ \
           -DGNULINUX
     
     LDFLAGS=-ltcl8.5 \
         -lpthread \
         -ldl \
         -L ./xml_support/obj/ -lxmlsup  \
+        -L ../bin/libs/ -lp2vera \
         `pkg-config --libs protobuf` \
         -rdynamic
 endif

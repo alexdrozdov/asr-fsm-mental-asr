@@ -16,103 +16,29 @@
 #include <fstream>
 #include <stdint.h>
 
+#include <p2vera.h>
+#include <p2message.h>
+#include <p2stream.h>
+
 #include "dsp_stream.pb.h"
-
-#define MAX_QUEUE_SIZE 20000
-
-#define FRAME_START  0xFB
-#define FRAME_END    0xFE
-#define FRAME_ESCAPE 0xFC
-
-//Максимальный размер принимающего буфера
-#define MAX_RCV_BUF 10000
-//Количество принимающих буферов
-#define RCV_BUF_COUNT 10
-
-
-enum ENetlinkMsgType {
-	nlmt_link = 0,       // Управление потоком передачи данных
-	nlmt_security = 1,   // Управление безопасностью. Смена паролей и режима шифрования
-	nlmt_time = 2,       // Информация о переключении времени
-	nlmt_trig = 3,       // Информация о переключении триггеров в текущем такте
-	nlmt_tcl = 4,        // tcl-команда. Предполагает ответ сервера
-	nlmt_trig_manage = 5,// Управление работой триггеров клиента
-	nlmt_text = 6        // Передача текстового отчета от сервера клиенту. Может интерпретироваться по соглашению клиента и сервера
-};
-
-enum ENetlinkLinkType {
-	nllt_version  = 1,         //Определение текущей версии клиента и сервера. Не предполагает дополнительных данных
-	nllt_reset_buffers = 2,    //Сброс буферов. Не предполагает дополнительных данных
-	nllt_close_connection = 3, //Корректное завершение соединения. Не предполагает дополнительных данных.
-	nllt_sleep = 4,            //Усыпление клиента на заданное время. Позволяет снизить нагрузку на сервер. Дополнительные данные: длина 1, время в миллисекундах (int).
-	nllt_samplerate = 5        //Установить частоту дискретизации
-};
-
-
-
-typedef struct _time_msg {
-	long long current_time;
-} time_msg;
 
 typedef struct _trig_msg_item {
 	int32_t out_id;
 	double value;
 } trig_msg_item, *ptrig_msg_item;
 
-typedef struct _trig_msg_trg_item {
-	int32_t trig_id;
-	int32_t out_count;
-} trig_msg_trg_item, *ptrig_msg_trg_item;
-
-typedef struct _netlink_msg {
-	int32_t msg_type;
-	int32_t msg_length;
-	int32_t trig_count;
-} netlink_msg, *pnetlink_msg;
-
-typedef struct _netlink_header {
-	int32_t msg_type;
-	int32_t msg_length;
-} netlink_hdr;
-
-class NetlinkOut;
-class NetlinkTrigger;
-class NetlinkMessage;
-class NetlinkMessageTrig;
-
-class NetlinkOut {
-public:
-	friend class NetlinkTrigger;
-	NetlinkOut(int id, double value);
-	void Dump(unsigned char* space) const;
-	int RequiredSize();
-private:
-	int out_id;
-	double out_value;
-};
-
-
-class NetlinkTrigger {
-public:
-	friend class NetlinkMessageTrig;
-	NetlinkTrigger(int id);
-	~NetlinkTrigger();
-	void Add(NetlinkOut* out);
-	void Add(int out_id, double value);
-	int RequiredSize();
-	void Dump(unsigned char* space);
-private:
-	std::vector<NetlinkOut*> outs;
-	int trigger_id;
-};
-
-
-class NetlinkMessage {
+class NetlinkMessage : public IP2VeraMessage {
 public:
 	virtual ~NetlinkMessage();
-	virtual int RequiredSize() = 0;
-	virtual void Dump(unsigned char* space) = 0;
 	virtual void Clear() = 0;
+
+	virtual bool get_data(std::string& str) const;
+	virtual int get_data(void* data, int max_data_size) const;
+	virtual int get_data_size() const;
+	virtual bool set_data(void* data, int data_size);
+	virtual bool set_data(std::string &str);
+protected:
+	dsp::dsp_package pkg;
 };
 
 
@@ -121,11 +47,7 @@ public:
 	NetlinkMessageTrig();
 	virtual ~NetlinkMessageTrig();
 	void Add(int triger_id, int out_id, double value);
-	int RequiredSize();
-	void Dump(unsigned char* space);
 	void Clear();
-private:
-	dsp::dsp_package pkg;
 };
 
 class NetlinkMessageTime : public NetlinkMessage {
@@ -134,12 +56,7 @@ public:
 	virtual ~NetlinkMessageTime();
 
 	void SetTime(long long time);
-
-	int RequiredSize();
-	void Dump(unsigned char* space);
 	void Clear();
-private:
-	dsp::dsp_package pkg;
 };
 
 class NetlinkMessageSamplerate : public NetlinkMessage {
@@ -148,19 +65,9 @@ public:
 	virtual ~NetlinkMessageSamplerate();
 
 	void SetSamplerate(unsigned int samplerate);
-
-	int RequiredSize();
-	void Dump(unsigned char* space);
 	void Clear();
-private:
-	dsp::dsp_package pkg;
 };
 
-//Структура описывает буфер, готовый к отправке через Netlink
-typedef struct _send_message_struct {
-	unsigned char* data;
-	int length;
-} send_message_struct, *psend_message_struct;
 
 class NetlinkSender {
 public:
@@ -181,15 +88,12 @@ private:
 	pthread_cond_t  send_queue_cv;
 
 	pthread_mutex_t to_send_mutex;
-	std::queue<send_message_struct> to_send;
 
 	int thread_function();
 	void initialize_send_queue();
 	void set_queue_size(int queue_size, bool signal_change);
 	void incr_queue_size();
 	void decr_queue_size();
-
-	int pack_n_send(send_message_struct sms);
 
 	friend void* netlinksender_thread_function (void* thread_arg);
 	friend void* netlink_rcv_thread_function (void* thread_arg);

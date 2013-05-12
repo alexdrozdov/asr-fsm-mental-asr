@@ -1,0 +1,17 @@
+/autom4te.cache/
+obj/
+\.bin$
+\.DS_Store$
+\.cproject$
+\.project$
+\.log$
+\.status$
+\.m4$
+\.komodoproject$
+\.in~$
+\.so$
+\.dylib$
+\.pb\.h$
+\.pb\.cc$
+\.pyc$
+\.settings/
