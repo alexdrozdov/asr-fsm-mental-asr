@@ -8,7 +8,7 @@
 #include <math.h>
 #include <sstream>
 
-#include <wavelet1d.h>
+#include "wavelet1d.h"
 
 #include "wavelet_processor.h"
 #include "array2d.h"

@@ -14,7 +14,7 @@
 
 #include "fwd_classes.h"
 
-#include "netlink_pack.h"
+#include "p2vera_dsp.h"
 #include "asr_core.h"
 
 typedef struct _process_task {

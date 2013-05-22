@@ -99,6 +99,7 @@ install.gnulinux: FORCE
 install.macos: FORCE
 	@install_name_tool -change ./obj/libxmlsup.dylib  @executable_path/libs/libxmlsup.dylib $(BUILD_DIR)/$(PROG)
 	@install_name_tool -change /usr/local/lib/libprotobuf.7.dylib  @executable_path/libs/libprotobuf.7.dylib $(BUILD_DIR)/$(PROG)
+	@install_name_tool -change ./obj/libp2vera.dylib  @executable_path/libs/libp2vera.dylib $(BUILD_DIR)/$(PROG)
 	@cp $(BUILD_DIR)/$(PROG) ../bin/
 	@echo Done
 

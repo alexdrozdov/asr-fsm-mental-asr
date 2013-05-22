@@ -23,7 +23,7 @@
 #include "fwd_classes.h"
 #include "base_processor.h"
 #include "mental_asr.h"
-#include "netlink_pack.h"
+#include "p2vera_dsp.h"
 
 class CAsrCore {
 public:

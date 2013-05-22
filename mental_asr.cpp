@@ -30,12 +30,14 @@
 #include "xml_support/xml_support.h"
 #include "input_manager.h"
 #include "processor_loader.h"
-#include "netlink_pack.h"
+#include "p2vera_dsp.h"
+#include "p2vera_control.h"
+#include "tclinterp_stream.h"
 
 using namespace std;
 
 int loadproc_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]);
-int netlink_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]);
+int p2vera_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]);
 int mkdump_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]);
 int process_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]);
 int inpdrv_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]);
@@ -53,14 +55,8 @@ int init_asr_structs(Tcl_Interp *interp) {
 	Tcl_SetVar(interp, "mental_asr(loaded)", "0",TCL_GLOBAL_ONLY);
 
 	create_tcl_handlers(interp);
-	nls = new NetlinkSender();
 	asr = new CAsrCore();
 	inpm = new CInputManager();
-
-	nmt =  new NetlinkMessageTrig();
-	nmtt = new NetlinkMessageTime(0);
-	nls =  new NetlinkSender();
-	nlsr = new NetlinkMessageSamplerate(0);
 
 	init_loadproc_handlers(interp);
 
@@ -80,8 +76,8 @@ int create_tcl_handlers (Tcl_Interp *interp) {
 	);
 
 	Tcl_CreateCommand(interp,
-			"netlink",
-			netlink_handler,
+			"p2vera",
+			p2vera_handler,
 			(ClientData) NULL,
 			(Tcl_CmdDeleteProc*) NULL
 	);
@@ -149,62 +145,71 @@ int loadproc_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST 
 	return TCL_OK;
 }
 
-int netlink_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]) {
-	//netlink open server port
-	//netlink close
-	//netlink info
-	//netlink dump enable|disable
-	if (4 == argc) {
+int p2vera_handler(ClientData clientData, Tcl_Interp* interp, int argc, CONST char *argv[]) {
+	//p2vera load config_file_name
+	//p2vera connect
+	//p2vera disconnect
+	//p2vera info
+	//p2vera dump enable|disable
+	InterpResultStream irs(interp);
+	if (3 == argc) {
 		string cmd = argv[1];
-		if ("open" == cmd) {
-			string server = argv[2];
-			string port   = argv[3];
-
-			if (0 != nls->OpenConnection(server,port)) {
-				cout << "netlink_handler error: couldn`t establish connection to server" << endl;
-				return TCL_ERROR;
-			}
+		if ("load" == cmd) {
+			string config_name = build_project_path(argv[2]);
+			p2v = new P2Vera(config_name);
+			p2vctrl = new P2VeraControl(p2v);
 			return TCL_OK;
 		}
-		cout << "netlink_handler error: wrong parameters" << endl;
+		irs << irs_clear << "p2vera_handler error: wrong parameters" << irs_apply;
 		return TCL_ERROR;
-	}
-	if (3 == argc) {
-		string dump_state = argv[2];
-
-		bool bdump_enable = false;
-		if (dump_state == "enable") {
-			bdump_enable = true;
-		}
-
-		nls->MkDump(bdump_enable);
-		return TCL_OK;
 	}
 	if (2 == argc) {
 		string cmd = argv[1];
-		if ("close" == cmd) {
-			nls->CloseConnection();
-			return TCL_OK;
-		}
-		if ("info" == cmd) {
-			if (nls->Connected()) {
-				cout << "online" << endl;
-			} else {
-				cout << "offline" << endl;
+		if ("connect" == cmd) {
+			if (NULL == p2vctrl) {
+				irs << irs_clear << "p2vera_handler error - p2vera wasnt initialized properly" << irs_apply;
+				return TCL_ERROR;
 			}
-
-			unsigned int incomming  = 0;
-			unsigned int outcomming = 0;
-			nls->GetStatistics(outcomming,incomming);
-			cout << "Traffic:" << endl;
-			cout << "\tincomming  " << incomming  << " B" << endl;
-			cout << "\toutcomming " << outcomming << " B" << endl;
+			if (p2vctrl->connect_fsm_server()) return TCL_OK;
+			irs << irs_clear << "p2vera connect error - remote server doesnt respond" << irs_apply;
+			return TCL_ERROR;
+		}
+		if ("enable" == cmd) {
+			if (NULL == p2v) {
+				irs << irs_clear << "p2vera_handler error - p2vera wasnt initialized properly" << irs_apply;
+				return TCL_ERROR;
+			}
+			p2v->start_network();
 			return TCL_OK;
 		}
-		cout << "netlink_handler error: wrong parameters" << endl;
-		return TCL_ERROR;
+		if ("disconnect" == cmd) {
+			if (NULL == p2vctrl) {
+				irs << irs_clear << "p2vera_handler error - p2vera wasnt initialized properly" << irs_apply;
+				return TCL_ERROR;
+			}
+			if (p2vctrl->disconnect_fsm_server()) return TCL_OK;
+			irs << irs_clear << "p2vera disconnect error - remote server denied disconnect request, staying online" << irs_apply;
+			return TCL_ERROR;
+		}
+		if ("connected" == cmd) {
+			if (NULL == p2vctrl) {
+				irs << irs_clear << "p2vera_handler error - p2vera wasnt initialized properly" << irs_apply;
+				return TCL_ERROR;
+			}
+			int c = (int)p2vctrl->connected();
+			irs << irs_clear << c << irs_apply;
+			return TCL_OK;
+		}
+		if ("uniqid" == cmd) {
+			if (NULL == p2v) {
+				irs << irs_clear << "p2vera_handler error - p2vera wasnt initialized properly" << irs_apply;
+				return TCL_ERROR;
+			}
+			irs << irs_clear << p2v->get_uniq_id() << irs_apply;
+			return TCL_OK;
+		}
 	}
-	cout << "netlink_handler error: wrong parameters" << endl;
+	irs << irs_clear << "p2vera_handler error: wrong parameters" << irs_apply;
 	return TCL_ERROR;
 }
 
@@ -370,8 +375,3 @@ int load_processors(Tcl_Interp* interp, std::string foldername) {
 	return 0;
 }
 
-
-NetlinkMessageTrig* nmt = NULL;
-NetlinkMessageTime* nmtt = NULL;
-NetlinkSender* nls = NULL;
-NetlinkMessageSamplerate* nlsr = NULL;

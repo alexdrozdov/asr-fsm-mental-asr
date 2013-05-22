@@ -17,11 +17,7 @@
 #include <tcl8.5/tcl.h>
 #endif
 
-#include "netlink_pack.h"
-
-extern NetlinkMessageTrig* nmt;
-extern NetlinkMessageTime* nmtt;
-extern NetlinkSender* nls;
+#include "p2vera_dsp.h"
 
 extern std::string executable_path;
 extern std::string project_path;

@@ -70,14 +70,18 @@ int CAsrCore::Process() {
 
 	int rsize = 0; //Количество считанных байт из входного потока
 
-	nlsr->SetSamplerate(inpm->get_samplerate());
-	nls->Send(nlsr);
+	DspMessageTrig nmt;
+	DspMessageTime nmtt(0);
+	DspMessageSamplerate nlsr(inpm->get_samplerate());
+
+	P2VeraStream p2s_c2s = p2v->create_outstream("c2s-proc-data");
+	p2s_c2s << nlsr;
 
 	process_task pt;
 	pt.buf = buf;
 	long long cur_time = 0;
 	while ( (rsize=inpm->read(buf,bufsize)) > 0 ) {
-		nmt->Clear();
+		nmt.Clear();
 
 		pt.sample_count = rsize;
 		//FIXME Время растет для каждого процессора по отдельности. По идее, необходимо сортировать все события, а потом отправлять их на сервер в поярдке их возникновения. Текущая схема работает только для одного "процессора" - источника событий
@@ -89,25 +93,21 @@ int CAsrCore::Process() {
 
 			while (pr->OutputsPresent()) {
 				pr->ShiftOutput();
-				nmt->Clear();
+				nmt.Clear();
 				for (int i=0;i<pr->out_count;i++) {
 					if (pr->outs[i].value != pr->prev_outs[i].value) {
-						nmt->Add(pr->trigger_id,pr->outs[i].out_id,pr->outs[i].value);
+						nmt.Add(pr->trigger_id,pr->outs[i].out_id,pr->outs[i].value);
 						pr->prev_outs[i].value = pr->outs[i].value;
 					}
 				}
 				cur_time = pr->output_time;
-				nmtt->SetTime(cur_time);
-				nls->Send(nmt);
-				nls->Send(nmtt);
+				nmtt.SetTime(cur_time);
+				p2s_c2s << nmt << nmtt;
 			}
 		}
 
 		cur_time += rsize;
-		//usleep(2);
 	}
-
-	//inpm->close();
 	return 0;
 }
 
