@@ -15,3 +15,10 @@ obj/
 \.pb\.cc$
 \.pyc$
 \.settings/
+py/wav
+a_1_data
+\.tmpl
+bye.wav
+fmg.sublime-project
+fmg.sublime-workspace
+hello.wav

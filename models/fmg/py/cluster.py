@@ -81,19 +81,24 @@ class ClusterTree:
             
     
 class PointCluster:
-    def __init__(self, file_name = None, extremums = None):
+    def __init__(self, file_name = None, extremums = None, xpoints = None):
         if None != file_name:
             swtt_s = swtt_state(file_name)
             swtt_s.load()
             self.extremums = swtt_s.extremums
+            self.x = numpy.matrix(self.extremums[1]).T
             return
         if None != extremums:
             self.extremums = extremums
+            self.x = numpy.matrix(self.extremums[1]).T
+            return
+        if None != xpoints:
+            self.x = xpoints.T
             return
         raise "Neither file name nor extremums matrix specified"
     
     def cluster(self, cluster_count = None, cluster_radius = 10.0):
-        x = numpy.matrix(self.extremums[1]).T
+        x = self.x
         nx = x.shape[0]
         D=pdist(x)
         l = fc.linkage(D,'single')
@@ -102,6 +107,7 @@ class PointCluster:
         self._ct = ClusterTree(l0, l)
         self._ct.find_groups(cluster_radius)
         self._ct.sort_groups()
+    
     def groups(self):
         return self._ct.groups()
 

@@ -29,7 +29,21 @@ DspMessage::~DspMessage() {
 
 
 bool DspMessage::get_data(std::string& str) const {
-	return pkg.SerializeToString(&str);
+	/*if (pkg.modified_triggers_inst_size() > 0) {
+		const ::dsp::modified_triggers& mt = pkg.modified_triggers_inst(0);
+		::google::protobuf::RepeatedPtrField< ::dsp::modified_triger>::const_iterator ctit;
+		for (ctit=mt.items().begin();ctit!=mt.items().end();ctit++) {
+			const ::dsp::modified_triger& mmt = *ctit;
+			cout << "DspMessage::get_data - trigger id: " << mmt.id() << "; outputs size: " << mmt.outputs_size();
+			cout << "; outputs: ";
+			::google::protobuf::RepeatedPtrField< ::dsp::trigger_output>::const_iterator coit;
+			for (coit=mmt.outputs().begin();coit!=mmt.outputs().end();coit++)
+				cout << " out[" << coit->out_id() << "]=" << coit->value();
+			cout << endl;
+		}
+	}*/
+	bool b = pkg.SerializeToString(&str);
+	return b;
 }
 
 int DspMessage::get_data(void* data, int max_data_size) const {
@@ -121,4 +135,39 @@ void DspMessageSamplerate::SetSamplerate(unsigned int samplerate) {
 void DspMessageSamplerate::Clear() {
 	pkg.mutable_samplerate_inst(0)->Clear();
 }
+
+///////////////////////////////////////////////////////////////////////
+
+DspMessageCmn::DspMessageCmn() {}
+
+DspMessageCmn::~DspMessageCmn() {}
+
+bool DspMessageCmn::has_trig() {
+	return pkg.modified_triggers_inst_size() > 0;
+}
+
+bool DspMessageCmn::has_time() {
+	return pkg.time_inst_size() > 0;
+}
+
+bool DspMessageCmn::has_samplerate() {
+	return pkg.samplerate_inst_size() > 0;
+}
+
+DspMessageCmn& DspMessageCmn::operator>>(DspMessageTrig& dsp_trig) {
+	dsp_trig.pkg.CopyFrom(pkg);
+	return *this;
+}
+
+DspMessageCmn& DspMessageCmn::operator>>(DspMessageTime& dsp_time) {
+	dsp_time.pkg.CopyFrom(pkg);
+	return *this;
+}
+
+DspMessageCmn& DspMessageCmn::operator>>(DspMessageSamplerate& dsp_sr) {
+	dsp_sr.pkg.CopyFrom(pkg);
+	return *this;
+}
+
+
 

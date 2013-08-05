@@ -43,6 +43,10 @@ CBaseProcessor* CAsrCore::FindProcessor(std::string proc_name) {
 	return NULL;
 }
 
+inline double abs(double v) {
+	return v>=0?v:-v;
+}
+
 int CAsrCore::Process() {
 	vector<CBaseProcessor*>::iterator itp;
 	if (0 != inpm->open()) {
@@ -85,7 +89,7 @@ int CAsrCore::Process() {
 
 		pt.sample_count = rsize;
 		//FIXME Время растет для каждого процессора по отдельности. По идее, необходимо сортировать все события, а потом отправлять их на сервер в поярдке их возникновения. Текущая схема работает только для одного "процессора" - источника событий
-		for (itp=processors.begin();itp < processors.end();itp++) {
+		for (itp=processors.begin();itp != processors.end();itp++) {
 			CBaseProcessor* pr = *itp;
 			pr->SetInitialTime(cur_time);
 			pr->SetTimeIncrement(1);
@@ -95,7 +99,7 @@ int CAsrCore::Process() {
 				pr->ShiftOutput();
 				nmt.Clear();
 				for (int i=0;i<pr->out_count;i++) {
-					if (pr->outs[i].value != pr->prev_outs[i].value) {
+					if (abs(pr->outs[i].value - pr->prev_outs[i].value) > 0.001) {
 						nmt.Add(pr->trigger_id,pr->outs[i].out_id,pr->outs[i].value);
 						pr->prev_outs[i].value = pr->outs[i].value;
 					}
@@ -105,8 +109,6 @@ int CAsrCore::Process() {
 				p2s_c2s << nmt << nmtt;
 			}
 		}
-
-		cur_time += rsize;
 	}
 	return 0;
 }

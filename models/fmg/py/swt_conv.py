@@ -30,12 +30,15 @@ def parse_options(argv = None):
     run_opts["level"] = 10
     run_opts["exact"] = False
     run_opts["plot"] = False
+    run_opts["multiline"] = False
+    run_opts["plot-extremums"] = False
+    run_opts["as-image"] = None
     
     if argv is None:
         argv = sys.argv
         
     try:
-        opts, args = getopt.getopt(argv[1:], "hf:w:l:s:r:xp", ["help","file","wavelet","level", "save", "reload"])
+        opts, args = getopt.getopt(argv[1:], "hf:w:l:s:r:xpmei:", ["help","file","wavelet","level", "save", "reload", "image"])
     except getopt.error, msg:
         print msg
         print "для справки используйте --help"
@@ -64,8 +67,17 @@ def parse_options(argv = None):
         if o in ("-x","--exact"):
             run_opts["exact"] = True
             
+        if o in ("-e","--plot-extremums"):
+            run_opts["plot-extremums"] = True
+            
         if o in ("-p","--plot"):
             run_opts["plot"] = True
+            
+        if o in ("-m","--multiline"):
+            run_opts["multiline"] = True
+            
+        if o in ("-i","--image"):
+            run_opts["as-image"] = a
             
     run_opts["n_files"] = len(run_opts["files"])
     run_opts["n_save"] = len(run_opts["save"])
@@ -135,12 +147,12 @@ class SwtTransform:
         self._wvl = pywt.swt(self._wv._sound, self._wavelet, self._max_level)
         self.list2matrix()
     
-    def plot(self, plot_size = None, range = None):
+    def plot(self, plot_size = None, range = None, multiline_resize = False):
         if None==plot_size:
             plot_size = self._swt_matrix.shape
         pylab.imshow(numpy.flipud(
             self.swt_range_scale(
-                self.swt_resize(plot_size),
+                self.swt_resize(plot_size, multiline_resize),
                 range
                 )
             ))
@@ -167,9 +179,15 @@ class SwtTransform:
         #print self._swt_matrix
         #print numpy.max(self._swt_matrix)
     
-    def swt_resize(self,new_size):
-        tmp_sig = scipy.signal.resample(self._swt_matrix,new_size[0], axis=0)
-        tmp_sig = scipy.signal.resample(tmp_sig,new_size[1], axis=1)
+    def swt_resize(self,new_size, multiline_resize = False):
+        if multiline_resize:
+            x_scale = new_size[1]/self._swt_matrix.shape[1]
+            y_scale = new_size[0]/self._swt_matrix.shape[0]
+            tmp_sig = numpy.repeat(self._swt_matrix, x_scale, axis=1)
+            tmp_sig = numpy.repeat(tmp_sig, y_scale, axis=0)
+        else:
+            tmp_sig = scipy.signal.resample(self._swt_matrix,new_size[0], axis=0)
+            tmp_sig = scipy.signal.resample(tmp_sig,new_size[1], axis=1)
         return tmp_sig
         
     def swt_range_scale(self,swt_mtx,range = None):
@@ -254,6 +272,30 @@ class SwtTransform:
         tmp_min = numpy.fmax(min_v, min_h);
         tmp_max = numpy.fmax(max_v, max_h);
         return (tmp_min, tmp_max)
+    
+    def find_xedges(self, sig = None):
+        if not sig:
+            sig = self._swt_matrix
+        sz = sig.shape
+        tmp_min = numpy.zeros(sz)
+        tmp_max = numpy.zeros(sz)
+        
+        sig_h1 = numpy.hstack((numpy.zeros((sz[0],1)), sig[:,0:sz[1]-1]))
+        sig_h2 = numpy.hstack((numpy.zeros((sz[0],2)), sig[:,0:sz[1]-2]))
+        sig_h3 = numpy.hstack((sig[:,1:sz[1]], numpy.zeros((sz[0],1))))
+        sig_h4 = numpy.hstack((sig[:,2:sz[1]], numpy.zeros((sz[0],2))))
+        positive_h1 = numpy.int32((sig - sig_h1)>0)
+        positive_h2 = numpy.int32((sig - sig_h2)>0)
+        positive_h3 = numpy.int32((sig - sig_h3)>0)
+        positive_h4 = numpy.int32((sig - sig_h4)>0)
+        max_h = numpy.int32((positive_h1 + positive_h2 + positive_h3 + positive_h4)==4)
+        negative_h1 = numpy.int32((sig - sig_h1)<0)
+        negative_h2 = numpy.int32((sig - sig_h2)<0)
+        negative_h3 = numpy.int32((sig - sig_h3)<0)
+        negative_h4 = numpy.int32((sig - sig_h4)<0)
+        min_h = numpy.int32((negative_h1 + negative_h2 + negative_h3 + negative_h4)==4)
+
+        return (min_h, max_h)
         
     def find_crosses(self, sig):
         tmp_crosses = numpy.zeros(sig.shape)
@@ -269,8 +311,11 @@ class SwtTransform:
         self.find_cross_pattern(sig, numpy.matrix([[0,1,0,0],[1,1,1,1],[0,0,1,0]]), tmp_crosses)
         return tmp_crosses
     
-    def find_extremums(self, alternate_size):
-        self.tmp_sig = self.swt_resize(alternate_size)
+    def find_extremums(self, alternate_size = None):
+        if alternate_size:
+            self.tmp_sig = self.swt_resize(alternate_size)
+        else:
+            self.tmp_sig = numpy.copy(self._swt_matrix)
         (tmp_min, tmp_max) = self.find_edges(self.tmp_sig)
         self.edges = tmp_min + tmp_max*2.0
         self.crosses = self.find_crosses(tmp_min) + self.find_crosses(tmp_max)
@@ -295,13 +340,18 @@ def main(argv=None):
             pylab.show()
         return
         
+    if run_opts["plot-extremums"]:
+        plot_number_mult = 2
+    else:
+        plot_number_mult = 1
     for f_name in run_opts["files"]:
         swtt.transform(f_name,run_opts["level"])
         swtt.find_extremums((350,1000))
-        pylab.subplot(run_opts["n_files"]*2,1,f_cnt*2-1)
-        swtt.plot_edges()
-        pylab.subplot(run_opts["n_files"]*2,1,f_cnt*2)
-        swtt.plot_extremums()
+        pylab.subplot(run_opts["n_files"]*plot_number_mult,1,f_cnt*plot_number_mult-1)
+        swtt.plot(plot_size=(350,1000), multiline_resize = run_opts["multiline"])
+        if run_opts["plot-extremums"]:
+            pylab.subplot(run_opts["n_files"]*plot_number_mult,1,f_cnt*plot_number_mult)
+            swtt.plot_extremums()
         if run_opts["n_save"]>0:
             swtt.save_extremums(run_opts["save"][f_cnt-1], complete=run_opts["exact"])
 

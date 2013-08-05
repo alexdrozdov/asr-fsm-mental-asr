@@ -27,6 +27,8 @@ typedef struct _trig_msg_item {
 	double value;
 } trig_msg_item, *ptrig_msg_item;
 
+class DspMessageCmn;
+
 class DspMessage : public IP2VeraMessage {
 public:
 	virtual ~DspMessage();
@@ -48,6 +50,8 @@ public:
 	virtual ~DspMessageTrig();
 	void Add(int triger_id, int out_id, double value);
 	void Clear();
+
+	friend class DspMessageCmn;
 };
 
 class DspMessageTime : public DspMessage {
@@ -57,6 +61,8 @@ public:
 
 	void SetTime(long long time);
 	void Clear();
+
+	friend class DspMessageCmn;
 };
 
 class DspMessageSamplerate : public DspMessage {
@@ -66,6 +72,22 @@ public:
 
 	void SetSamplerate(unsigned int samplerate);
 	void Clear();
+
+	friend class DspMessageCmn;
+};
+
+class DspMessageCmn : public DspMessage {
+public:
+	DspMessageCmn();
+	virtual ~DspMessageCmn();
+
+	virtual bool has_trig();
+	virtual bool has_time();
+	virtual bool has_samplerate();
+
+	virtual DspMessageCmn& operator>>(DspMessageTrig&);
+	virtual DspMessageCmn& operator>>(DspMessageTime&);
+	virtual DspMessageCmn& operator>>(DspMessageSamplerate&);
 };
 
 extern P2Vera *p2v;
