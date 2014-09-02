@@ -76,10 +76,19 @@ class ExtremumSequence:
     def add_extremum(self, ref_extremum):
         self._ref_extremums.append(ref_extremum)
         
-    def apply(self, signal, x, update_probability = False, update_as_fine = False):
+    def apply(self, high_extremums, low_extremums, x, update_probability = False, update_as_fine = False):
         fine = 0.0
         for ep in self._ref_extremums:
-            fine += ep.eval_fine(signal, x, update_probability, update_as_fine)
+            if ep._base_point._is_max:
+                #print "applying as max"
+                f = ep.eval_fine(high_extremums, x, update_probability, update_as_fine)
+                fine += f
+                #print "fine:", f
+            else:
+                #print "applying as min"
+                f = ep.eval_fine(low_extremums, x, update_probability, update_as_fine)
+                fine += f#ep.eval_fine(low_extremums, x, update_probability, update_as_fine)
+                #print "fine:", f
         return fine
     
     def update_base_probabilities(self):
@@ -134,22 +143,24 @@ class ExtremumTemplate:
                 ref_coords = numpy.array([ex._global_coords[0], ex._global_coords[1] - be._global_coords[1]]);
                 ex_sequence.add_extremum(RefExtremumPoint(ex, ref_coords))
                 
-    def apply(self, signal, x):
-        scales = numpy.nonzero(signal[:, x])[0]
-        min_fine = len(signal[0])
+    def apply(self, high_extremums, low_extremums, x):
+        scales = numpy.nonzero(high_extremums[:, x])[0]
+        print scales
+        min_fine = len(high_extremums[0])
         base_extremum = None
         best_sequence = None
         for scale in scales:
             scale_handlers = self._scale_handlers[scale]
             for ex_sequence in scale_handlers:
-                fine = ex_sequence.apply(signal, x)
+                print "applying at", x
+                fine = ex_sequence.apply(high_extremums, low_extremums, x)
                 if min_fine > fine:
                     min_fine = fine
                     base_extremum = ex_sequence._base_extremum
                     best_sequence = ex_sequence
-        if base_extremum and min_fine < 8:
+        if base_extremum and min_fine < 16:
             start_x = x-base_extremum._global_coords[1]
-            best_sequence.apply(signal, x, True)
+            best_sequence.apply(high_extremums, low_extremums, x, True)
             best_sequence._hit_count += 1
         else:
             start_x = None
@@ -189,28 +200,40 @@ class TemplateFinder:
         self._templates.append(template)
         self._template_x[template._name] = []
         
+    def find_xextremums(self):
+        self._swtt.transform(self._file_name, self._max_levels)
+        xedges = self._swtt.find_xedges()
+        xedges_min = xedges[0]
+        edge_coords = numpy.nonzero(xedges_min)
+        edge_values = self._swtt._swt_matrix[edge_coords]
+        edge_median = numpy.median(edge_values)
+        edges_min = numpy.multiply(self._swtt._swt_matrix<=edge_median, xedges_min)
+        edges_min[7:,:] = 0
+        
+        xedges_max = xedges[1]
+        edge_coords = numpy.nonzero(xedges_max)
+        edge_values = self._swtt._swt_matrix[edge_coords]
+        edge_median = numpy.median(edge_values)
+        edges_max = numpy.multiply(self._swtt._swt_matrix>=edge_median, xedges_max)
+        edges_max[7:,:] = 0
+        
+        return (edges_min, edges_max)
+        
     def analize_file(self, file_name):
         self._swtt = swt_conv.SwtTransform("db2")
         self._file_name = file_name
-        
         self._max_levels = 9
-        self._swtt.transform(self._file_name, self._max_levels)
-        self._swtt.find_extremums()
-        #edges = self._swtt.find_xedges()[1]
-        xedges = self._swtt.find_xedges()
-        edges = (xedges[0]+xedges[1])>0
-        edge_coords = numpy.nonzero(edges)
-        edge_values = self._swtt._swt_matrix[edge_coords]
-        edge_median = numpy.median(edge_values)
-        edges = numpy.multiply(self._swtt._swt_matrix>=edge_median, edges)
-        edges[7:,:] = 0
+        self._edges = self.find_xextremums()
+
+        edges = self._edges[1]
         edge_coords = numpy.copy(numpy.nonzero(edges)[1])
         edge_coords.sort()
-        
+        print edge_coords
         for coord in edge_coords:
+            print "coord=", coord
             for etb in self._templates:
                 cur_template_x = self._template_x[etb._name]
-                res = etb.apply(edges, coord)
+                res = etb.apply(self._edges[1], self._edges[0], coord)
                 if None != res[1]:
                     cur_template_x.append(res[1])
         

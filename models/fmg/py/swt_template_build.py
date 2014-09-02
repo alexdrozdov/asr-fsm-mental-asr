@@ -106,21 +106,23 @@ class TemplateBuilder:
         
     def build(self, template_name, max_levels = 9):
         self._max_levels = max_levels
-        self._edges = self.find_xextremums()
-        edges = self._edges[1]
-        edge_coords = numpy.nonzero(edges)
         etb = swt_template.ExtremumTemplate(template_name, self._max_levels)
-        for i in range(len(edge_coords[0])):
-            coord = numpy.array((edge_coords[0][i], edge_coords[1][i]))
-            base_extremum = swt_template.BaseExtremumPoint(coord, 1, is_max = True)
-            etb.add_extremum(base_extremum)
+        
+        self._edges = self.find_xextremums()
             
         edges = self._edges[0]
         edge_coords = numpy.nonzero(edges)
-        etb = swt_template.ExtremumTemplate(template_name, self._max_levels)
+        #etb = swt_template.ExtremumTemplate(template_name, self._max_levels)
         for i in range(len(edge_coords[0])):
             coord = numpy.array((edge_coords[0][i], edge_coords[1][i]))
             base_extremum = swt_template.BaseExtremumPoint(coord, 1, is_max = False)
+            etb.add_extremum(base_extremum)
+            
+        edges = self._edges[1]
+        edge_coords = numpy.nonzero(edges)
+        for i in range(len(edge_coords[0])):
+            coord = numpy.array((edge_coords[0][i], edge_coords[1][i]))
+            base_extremum = swt_template.BaseExtremumPoint(coord, 1, is_max = True)
             etb.add_extremum(base_extremum)
             
         etb.rebuild()
